@@ -140,59 +140,45 @@ pub fn Store() -> Element {
 #[component]
 pub fn ShowPage(page: Signal<Page>) -> Element {
     rsx! {
-        // Un conteneur global pour espacer tes cartes si la page contient plusieurs skins
-        div { style: "display: flex; flex-direction: column; gap: 2rem; padding: 20px 0;",
+        div { style: "display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2rem; padding: 25px; width: 100%; max-width: 95vw; margin: 0 auto;",
 
-            // On boucle sur les données via un itérateur magique Dioxus
-            {page.read().data.list.iter().map(|skin| rsx! {
-                Card {
-                    style: "margin: 0 auto; width: 100%; max-width: 80vw;",
-                    key: "{skin.file.name}", // Toujours ajouter une clé unique pour optimiser le rendu des listes
+            { page.read().data.list.iter().map(|skin| rsx! {
 
-                    // CardHeader {
-                    //     CardTitle { "{skin.title}" }
-                    // }
+                div {
+                    // key: "{skin.file.name}{skin.author.nickname}",
+                    style: "width: 100%; display: flex; flex-direction: column;",
 
-                    CardContent {
-                        // Conteneur en ligne (Flex Row)
-                        div { style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; gap: 1.5rem; width: 100%;",
+                    Card {
+                        style: "width: 100%; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;",
 
-                            // Bloc de gauche : Les statistiques et détails
-                            div { style: "display: grid; gap: 0.5rem;",
-                                ul {
-                                    li { "Author : {skin.author.nickname}" }
-                                    li { "Likes : {skin.likes}" }
-                                    li { "Views: {skin.views}" }
-                                    li { "Downloads : {skin.downloads}" }
-                                    li { "Comments: {skin.comments}" }
-                                    li {
-                                        "Download:"
-                                        ul {
-                                            li { "Filename: {skin.file.name}" }
-                                            li { "Size: {(skin.file.size as f32 / 1_000_000.0).round()} MB" }
-                                        }
-                                    }
-                                }
-                            }
+                        CardContent {
+                            style: "display: flex; flex-direction: row; align-items: center; gap: 1rem; width: 100%;",
 
-                            // Bloc de droite : L'image (bien positionnée comme enfant direct du Flex Row)
                             img {
                                 src: "{skin.get_thumbnail()}",
-                                style: "max-width: 35%; height: auto; border-radius: 6px;"
+                                style: "display: block; max-height: 250px; width: auto; max-width: 100%; border-radius: 6px; margin: 0 auto;"
+                            }
+
+                            ul { style: "display: grid; gap: 0.2rem; width: 100%; font-size: 0.85rem;",
+                                li { "Author : {skin.author.nickname}" }
+                                li { "Likes : {skin.likes}" }
+                                li { "Views: {skin.views}" }
+                                li { "Downloads : {skin.downloads}" }
+                                li { "Comments: {skin.comments}" }
                             }
                         }
-                    }
 
-                    CardFooter {
-                        style: "flex-direction: column; gap: 0.5rem;",
-                        Button {
-                            variant: ButtonVariant::Secondary,
-                            "Install Skin ({(skin.file.size as f32 / 1_000_000.0).round()} MB)"
+                        CardFooter {
+                            style: "flex-direction: column; gap: 0.5rem; margin-top: auto; padding-top: 10px;",
+                            Button {
+                                variant: ButtonVariant::Secondary,
+                                style: "width: 100%; font-size: 0.85rem;",
+                                "Install Skin ({(skin.file.size as f32 / 1_000_000.0).round()} MB)"
+                            }
                         }
                     }
                 }
             })}
-
         }
     }
 }
@@ -253,52 +239,52 @@ pub fn ShowPage(page: Signal<Page>) -> Element {
 //     }
 // }
 
-#[component]
-pub fn SkinCard(fetched_skin: Signal<Skin>) -> Element {
-    rsx! {
-        Separator {
-            style: "margin: 25px auto; width: 50%;",
-            horizontal: true,
-            decorative: true,
-        }
+// #[component]
+// pub fn SkinCard(fetched_skin: Signal<Skin>) -> Element {
+//     rsx! {
+//         Separator {
+//             style: "margin: 25px auto; width: 50%;",
+//             horizontal: true,
+//             decorative: true,
+//         }
 
-        Card {  style: "margin: 0 auto; width: 100%; max-width: 80vw;",
-            // CardHeader {
-            //     CardTitle { "{fetched_skin.read().title}"  }
-            // }
+//         Card {  style: "margin: 0 auto; width: 100%; max-width: 80vw;",
+//             // CardHeader {
+//             //     CardTitle { "{fetched_skin.read().title}"  }
+//             // }
 
-            CardContent {
-                div { style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; gap: 1.5rem; width: 100%;",
+//             CardContent {
+//                 div { style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; gap: 1.5rem; width: 100%;",
 
-                    div { style: "display: grid; gap: 0.5rem;",
-                        ul {
-                            li { "Author : {fetched_skin.read().author.nickname}" }
-                            li { "Likes : {fetched_skin.read().likes}" }
-                            li { "Views: {fetched_skin.read().views}" }
-                            li { "Downloads : {fetched_skin.read().downloads}" }
-                            li { "Comments: {fetched_skin.read().comments}" }
+//                     div { style: "display: grid; gap: 0.5rem;",
+//                         ul {
+//                             li { "Author : {fetched_skin.read().author.nickname}" }
+//                             li { "Likes : {fetched_skin.read().likes}" }
+//                             li { "Views: {fetched_skin.read().views}" }
+//                             li { "Downloads : {fetched_skin.read().downloads}" }
+//                             li { "Comments: {fetched_skin.read().comments}" }
 
-                            li {
-                                "Download:"
-                                ul {
-                                    li { "Filename: {fetched_skin.read().file.name}" }
-                                        li {"Size: {(fetched_skin.read().file.size as f32 / 1e6 as f32).round()} MB" }
+//                             li {
+//                                 "Download:"
+//                                 ul {
+//                                     li { "Filename: {fetched_skin.read().file.name}" }
+//                                         li {"Size: {(fetched_skin.read().file.size as f32 / 1e6 as f32).round()} MB" }
 
-                                }
-                            }
-                        }
-                    }
-                    img {
-                        src: "{fetched_skin.read().get_thumbnail()}",
-                        style: "max-width: 35%; height: auto; border-radius: 6px;"
-                    }
-                }
-            }
+//                                 }
+//                             }
+//                         }
+//                     }
+//                     img {
+//                         src: "{fetched_skin.read().get_thumbnail()}",
+//                         style: "max-width: 35%; height: auto; border-radius: 6px;"
+//                     }
+//                 }
+//             }
 
-            CardFooter { style: "flex-direction: column; gap: 0.5rem;",
-                Button { variant: ButtonVariant::Secondary, "Install Skin ({(fetched_skin.read().file.size as f32 / 1e6 as f32).round()} MB)" }
-            }
+//             CardFooter { style: "flex-direction: column; gap: 0.5rem;",
+//                 Button { variant: ButtonVariant::Secondary, "Install Skin ({(fetched_skin.read().file.size as f32 / 1e6 as f32).round()} MB)" }
+//             }
 
-        }
-    }
-}
+//         }
+//     }
+// }
