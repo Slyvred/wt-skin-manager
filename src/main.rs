@@ -1,7 +1,8 @@
 use dioxus::prelude::*;
 
 mod api;
-use crate::api::{fetch_page, fetch_skin, Page, Skin};
+use crate::api::{fetch_filters, fetch_page, fetch_skin, Page, Skin};
+use serde_json::{json, Value};
 
 mod components;
 use crate::components::button::*;
@@ -38,6 +39,22 @@ pub fn Store() -> Element {
     let mut vehicle_type_value = use_signal(|| None::<String>);
     let mut page = use_signal(|| Page::default());
     let mut error_message = use_signal(|| String::new());
+
+    let mut filters = use_signal(|| serde_json::json!({}));
+
+    use_hook(move || {
+        spawn(async move {
+            match fetch_filters().await {
+                Ok(fetched_filters) => {
+                    filters.set(fetched_filters);
+                    error_message.set(String::new());
+                }
+                Err(err) => {
+                    error_message.set(format!("Error : {err}"));
+                }
+            }
+        });
+    });
 
     let countries: &[(&str, &str)] = &[
         ("", "Any"),
@@ -113,7 +130,7 @@ pub fn Store() -> Element {
                 let vehicle = vehicle_type_value.read().clone().unwrap_or_default();
 
                 spawn(async move {
-                    match fetch_page(&country, &vehicle).await {
+                    match fetch_page(&country, &vehicle, 0).await {
                         Ok(fetched_page) => {
                             page.set(fetched_page);
                             error_message.set(String::new());

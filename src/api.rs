@@ -1,4 +1,6 @@
+use regex::Regex;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::str::FromStr;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
@@ -88,13 +90,72 @@ pub async fn fetch_skin(url: &str) -> std::prelude::v1::Result<Skin, String> {
     Skin::from_str(&body_text)
 }
 
+pub async fn fetch_filters() -> Result<Value, String> {
+    // curl 'https://live.warthunder.com/api/feed/get_head/' \
+    //   --compressed \
+    //   -X POST \
+    //   -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:150.0) Gecko/20100101 Firefox/150.0' \
+    //   -H 'Accept: text/plain, */*; q=0.01' \
+    //   -H 'Accept-Language: fr,fr-FR;q=0.9,en-US;q=0.8,en;q=0.7' \
+    //   -H 'Accept-Encoding: gzip, deflate, br, zstd' \
+    //   -H 'Referer: https://live.warthunder.com/feed/all/' \
+    //   -H 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8' \
+    //   -H 'Origin: https://live.warthunder.com' \
+    //   -H 'Connection: keep-alive' \
+    //   -H 'Cookie: conntrack=jlsI/mjyfZ9f1lnCAwvSAg==; lang=en' \
+    //   -H 'Sec-Fetch-Dest: empty' \
+    //   -H 'Sec-Fetch-Mode: cors' \
+    //   -H 'Sec-Fetch-Site: same-origin' \
+    //   -H 'Priority: u=0' \
+    //   -H 'TE: trailers' \
+    //   --data-raw 'content=camouflage&sort=rating&user=&period=7&searchString=&page=0&featured=0&subtype=all'
+
+    let params = [
+        ("content", "camouflage"),
+        ("sort", "rating"),
+        ("user", ""),
+        ("period", ""),
+        ("searchString", ""),
+        ("page", "0"),
+        ("featured", "0"),
+        ("subtype", "all"),
+    ];
+
+    let client = reqwest::Client::new();
+
+    let res = client
+        .post("https://live.warthunder.com/api/feed/get_head/")
+        .header(
+            "User-Agent",
+            "Mozilla/5.0 (X11; Linux x86_64; rv:150.0) Gecko/20100101 Firefox/150.0",
+        )
+        .header("Origin", "https://live.warthunder.com")
+        .form(&params)
+        .send()
+        .await
+        .map_err(|e| format!("Network error : {e}"))?;
+
+    let body_text = res.text().await.map_err(|e| e.to_string())?;
+    let re = Regex::new(r"(?s)const filters = (\{.*?\});").unwrap();
+
+    let mut results = String::new();
+    for (_, [json]) in re.captures_iter(&body_text).map(|c| c.extract()) {
+        results = json.to_string();
+    }
+
+    let json_filers: Value = serde_json::from_str(&results).unwrap_or_default();
+    println!("{}", json_filers);
+    Ok(json_filers)
+}
+
 pub async fn fetch_page(
     country: &str,
     vehicle_type: &str,
+    page: i32,
 ) -> std::prelude::v1::Result<Page, String> {
-    if country.is_empty() || vehicle_type.is_empty() {
-        return Err("All parameters are required".to_string());
-    }
+    // if country.is_empty() || vehicle_type.is_empty() {
+    //     return Err("All parameters are required".to_string());
+    // }
 
     let client = reqwest::Client::new();
 
@@ -124,6 +185,7 @@ pub async fn fetch_page(
         ("searchString", ""),
         ("featured", "0"),
         ("subtype", "all"),
+        ("page", &page.to_string()),
         ("vehicleCountry", country),
         ("vehicleType", vehicle_type),
     ];
@@ -134,7 +196,7 @@ pub async fn fetch_page(
             "User-Agent",
             "Mozilla/5.0 (X11; Linux x86_64; rv:150.0) Gecko/20100101 Firefox/150.0",
         )
-        // .header("Origin", "https://live.warthunder.com")
+        .header("Origin", "https://live.warthunder.com")
         .form(&params)
         .send()
         .await
