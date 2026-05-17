@@ -1,17 +1,20 @@
 use dioxus::prelude::*;
+use reqwest::Client;
+use std::sync::{Arc, Mutex};
+use std::time::Duration;
 
+mod installer;
+use dioxus_primitives::toast::{use_toast, ToastOptions};
+use installer::install_skin;
 mod api;
-use crate::api::{fetch_filters, fetch_page, fetch_skin, Page, Skin};
-use serde_json::{json, Value};
+use crate::api::{fetch_filters, fetch_page, Filters, Page, Skin};
 
 mod components;
 use crate::components::button::*;
 use crate::components::card::*;
 use crate::components::combobox::*;
-use crate::components::input::*;
-use crate::components::label::*;
 use crate::components::pagination::*;
-use crate::components::separator::*;
+use crate::components::toast::*;
 
 const FAVICON: Asset = asset!("/assets/favicon.ico");
 const MAIN_CSS: Asset = asset!("/assets/main.css");
@@ -27,30 +30,40 @@ fn App() -> Element {
         document::Link { rel: "icon", href: FAVICON }
         document::Link { rel: "stylesheet", href: MAIN_CSS }
         document::Link { rel: "stylesheet", href: ASSETS_CSS }
-        // MainPanel {}
-        Store {  }
+        Store { }
     }
 }
 
 #[component]
 pub fn Store() -> Element {
-    let mut country_query = use_signal(String::new);
-    let mut country_value = use_signal(|| None::<String>);
+    let mut client = use_signal(|| Client::new());
+
+    let mut vehicle_country_query = use_signal(String::new);
+    let mut vehicle_country_value = use_signal(|| None::<String>);
 
     let mut vehicle_type_query = use_signal(String::new);
     let mut vehicle_type_value = use_signal(|| None::<String>);
 
+    let mut vehicle_class_query = use_signal(String::new);
+    let mut vehicle_class_value = use_signal(|| None::<String>);
+
+    let mut vehicle_query = use_signal(String::new);
+    let mut vehicle_value = use_signal(|| None::<String>);
+
     let mut page = use_signal(|| Page::default());
     let mut error_message = use_signal(|| String::new());
 
-    let mut filters = use_signal(|| serde_json::json!({}));
+    let mut filters = use_signal(|| Filters::default());
     let mut active_page = use_signal(|| 0);
 
     let search_action = move |target_page: i32| {
         spawn(async move {
             match fetch_page(
-                country_value.read().as_deref().unwrap_or_default(),
+                client.read().clone(),
+                vehicle_country_value.read().as_deref().unwrap_or_default(),
                 vehicle_type_value.read().as_deref().unwrap_or_default(),
+                vehicle_class_value.read().as_deref().unwrap_or_default(),
+                vehicle_value.read().as_deref().unwrap_or_default(),
                 target_page,
             )
             .await
@@ -59,7 +72,7 @@ pub fn Store() -> Element {
                     page.set(fetched_page);
                 }
                 Err(err) => {
-                    error_message.set(format!("Erreur : {err}"));
+                    error_message.set(format!("Error : {err}"));
                 }
             }
         });
@@ -67,8 +80,9 @@ pub fn Store() -> Element {
 
     use_hook(move || {
         spawn(async move {
-            match fetch_filters().await {
+            match fetch_filters(client.read().clone()).await {
                 Ok(fetched_filters) => {
+                    // println!("{:?}", &fetched_filters);
                     filters.set(fetched_filters);
                     error_message.set(String::new());
                 }
@@ -81,36 +95,38 @@ pub fn Store() -> Element {
 
     rsx! {
         div {
-            style: "position: fixed; top: 1.25rem",
+            style: "position: fixed; top: 1.25rem;",
             Combobox::<String> {
-                value: Some(country_value.into()),
+                value: Some(vehicle_country_value.into()),
                 on_value_change: move |next: Option<String>| {
-                    country_value.set(next);
+                    vehicle_country_value.set(next);
                 },
-                query: Some(country_query()),
-                on_query_change: move |next| country_query.set(next),
+                query: Some(vehicle_country_query()),
+                on_query_change: move |next| vehicle_country_query.set(next),
                 placeholder: "Country",
                 aria_label: "Country",
                 list_aria_label: "Countries",
                 ComboboxEmpty { "No country found." }
 
-                if let Some(variants) = filters.read()["vehicleCountry"]["variants"].as_array() {
-                    { variants.iter().enumerate().map(|(i, country)| {
-                        let value = country["value"].as_str().unwrap_or_default();
-                        let name = country["name"].as_str().unwrap_or_default();
-                        let count = country["count"].as_i64().unwrap_or_default();
-                        let label = format!("{} ({})", name, count);
+                {
+                    filters.read().vehicle_country.variants.iter().enumerate().map(|(i, variant)| {
+                        let raw_value = variant.value.as_deref().unwrap_or("");
+                        let name = &variant.name;
+                        let count = variant.count.unwrap_or_default();
+
+                        let final_value = if raw_value == "any" { "" } else { raw_value };
+                        let label = if count == 0 { format!("{}", name) } else { format!("{} ({})", name, count) };
 
                         rsx! {
                             ComboboxOption::<String> {
-                                key: "{value}",
+                                key: "{raw_value}_{i}",
                                 index: i,
-                                value: value.to_string(),
+                                value: final_value.to_string(),
                                 text_value: name.to_string(),
                                 "{label}"
                             }
                         }
-                    })}
+                    })
                 }
             }
 
@@ -127,23 +143,164 @@ pub fn Store() -> Element {
                 list_aria_label: "Types",
                 ComboboxEmpty { "No type found." }
 
-                if let Some(variants) = filters.read()["vehicleType"]["variants"].as_array() {
-                    { variants.iter().enumerate().map(|(i, vehicule_type)| {
-                        let value = vehicule_type["value"].as_str().unwrap_or_default();
-                        let name = vehicule_type["name"].as_str().unwrap_or_default();
-                        let count = vehicule_type["count"].as_i64().unwrap_or_default();
-                        let label = format!("{} ({})", name, count);
+                {
+                    filters.read().vehicle_type.variants.iter().enumerate().map(|(i, variant)| {
+                        let raw_value = variant.value.as_deref().unwrap_or("");
+                        let name = &variant.name;
+                        let count = variant.count.unwrap_or_default();
+
+                        let final_value = if raw_value == "any" { "" } else { raw_value };
+                        let label = if count == 0 { format!("{}", name) } else { format!("{} ({})", name, count) };
 
                         rsx! {
                             ComboboxOption::<String> {
-                                key: "{value}",
+                                key: "{raw_value}_{i}",
                                 index: i,
-                                value: value.to_string(),
+                                value: final_value.to_string(),
                                 text_value: name.to_string(),
                                 "{label}"
                             }
                         }
-                    })}
+                    })
+                }
+            }
+
+            Combobox::<String> {
+                style: "margin-left: 0.5rem;",
+                value: Some(vehicle_class_value.into()),
+                on_value_change: move |next: Option<String>| {
+                    vehicle_class_value.set(next);
+                },
+                query: Some(vehicle_class_query()),
+                on_query_change: move |next| vehicle_class_query.set(next),
+                placeholder: "Class",
+                aria_label: "Class",
+                list_aria_label: "Classes",
+                ComboboxEmpty { "No classes found." }
+
+                {
+                    filters
+                        .read()
+                        .vehicle_class
+                        .variants
+                        .iter()
+                        .filter(|class| {
+
+                            if class.value.as_deref() == Some("any") {
+                                return true;
+                            }
+
+                            let selected_type = vehicle_type_value.read();
+                            let current_type_str = selected_type.as_deref().unwrap_or("");
+
+                            if current_type_str.is_empty() {
+                                return true;
+                            }
+
+                            if let Some(dep_type) = &class.dep {
+                                if let Some(allowed_types) = &dep_type.vehicle_type {
+                                    return allowed_types.iter().any(|t| t == current_type_str);
+                                }
+                            }
+                            false
+                        })
+                        .enumerate()
+                        .map(|(i, variant)| {
+                            let raw_value = variant.value.as_deref().unwrap_or("");
+                            let name = &variant.name;
+                            let count = variant.count.unwrap_or_default();
+
+                            let final_value = if raw_value == "any" { "" } else { raw_value };
+                            let label = if count == 0 { format!("{}", name) } else { format!("{} ({})", name, count) };
+
+                            rsx! {
+                                ComboboxOption::<String> {
+                                    key: "{raw_value}_{i}",
+                                    index: i,
+                                    value: final_value.to_string(),
+                                    text_value: name.to_string(),
+                                    "{label}"
+                                }
+                            }
+                        })
+                }
+            }
+
+            Combobox::<String> {
+                style: "margin-left: 0.5rem;",
+                value: Some(vehicle_value.into()),
+                on_value_change: move |next: Option<String>| {
+                    vehicle_value.set(next);
+                },
+                query: Some(vehicle_query()),
+                on_query_change: move |next| vehicle_query.set(next),
+                placeholder: "Vehicle",
+                aria_label: "Vehicle",
+                list_aria_label: "Vehicles",
+                ComboboxEmpty { "No vehicles found." }
+
+                {
+                    filters
+                        .read()
+                        .vehicle
+                        .variants
+                        .iter()
+                        .filter(|class| {
+                            if class.value.as_deref() == Some("any") {
+                                return true;
+                            }
+
+                            let type_str = vehicle_type_value.read().as_deref().unwrap_or("").to_string();
+                            let country_str = vehicle_country_value.read().as_deref().unwrap_or("").to_string();
+                            let class_str = vehicle_class_value.read().as_deref().unwrap_or("").to_string();
+
+                            if type_str.is_empty() && country_str.is_empty() && class_str.is_empty() {
+                                return false;
+                            }
+
+                            if let Some(dep_type) = &class.dep {
+
+                                let type_match = type_str.is_empty() || dep_type.vehicle_type.as_ref()
+                                    .map(|types| types.iter().any(|t| t == &type_str))
+                                    .unwrap_or(false);
+
+                                let country_match = country_str.is_empty() || dep_type.vehicle_country.as_ref()
+                                    .map(|countries| countries.iter().any(|c| c == &country_str))
+                                    .unwrap_or(false);
+
+                                let class_match = class_str.is_empty() || dep_type.vehicle_class.as_ref()
+                                    .map(|classes| classes.iter().any(|cl| cl == &class_str))
+                                    .unwrap_or(false);
+
+                                return type_match && country_match && class_match;
+                            }
+
+                            false
+                        })
+                        .enumerate()
+                        .map(|(i, variant)| {
+                            let raw_value = variant.value.as_deref().unwrap_or("");
+                            let name = &variant.name;
+                            let count = variant.count.unwrap_or_default();
+
+                            let final_value = if raw_value == "any" { "" } else { raw_value };
+
+                            let label = if count == 0 {
+                                format!("{}", name)
+                            } else {
+                                format!("{} ({})", name, count)
+                            };
+
+                            rsx! {
+                                ComboboxOption::<String> {
+                                    key: "{raw_value}_{i}",
+                                    index: i,
+                                    value: final_value.to_string(),
+                                    text_value: name.to_string(),
+                                    "{label}"
+                                }
+                            }
+                        })
                 }
             }
 
@@ -151,7 +308,6 @@ pub fn Store() -> Element {
                 style: "margin-left: 0.5rem;",
                 variant: ButtonVariant::Secondary,
                 onclick: move |_| {
-                    // Quand on fait une nouvelle recherche, on repart de la page 0
                     active_page.set(0);
                     search_action(0);
                 },
@@ -164,13 +320,15 @@ pub fn Store() -> Element {
         }
 
         if *page.read() != Page::default() {
-            ShowPage { page: page }
+            ToastProvider {
+                ShowPage { page: page }
+            }
         }
 
         Pagination {
             style: "position: fixed; bottom: 1.25rem; margin: 0 auto;",
             PaginationContent {
-                style: "background-color: var(--background); border-radius: 10px; padding: 0.3rem",
+                style: "background-color: #0f1116; border-radius: 10px; padding: 0.3rem",
                 PaginationItem {
                     PaginationPrevious {
                         onclick: move |_| {
@@ -203,155 +361,84 @@ pub fn Store() -> Element {
 #[component]
 pub fn ShowPage(page: Signal<Page>) -> Element {
     rsx! {
-        div { style: "columns: 3 280px; gap: 1.5rem; padding: 25px; width: 100%; max-width: 98vw; margin: 0 auto;",
+        div { style: "columns: 3 280px; gap: 1.5rem; padding: 25px; width: 100%; max-width: 98vw; margin: 3rem auto 0 auto;",
 
-            { page.read().data.list.iter().map(|skin| rsx! {
-
-                div {
-                    key: "{skin.file.name}{skin.file.size}",
-                    style: "display: inline-block; width: 100%; break-inside: avoid; margin-bottom: 1.5rem;",
-
-                    Card {
-                        style: "width: 100%; display: flex; flex-direction: column; overflow: hidden; margin: 0;",
-
-                        CardHeader {
-                            CardTitle { "Author : {skin.author.nickname}" }
-                            CardDescription {
-                                div { style: "display: flex; flex-direction: row; align-items: center; gap: 0.8rem; font-size: 0.85rem;",
-                                    div { style: "display: flex; align-items: center; gap: 0.2rem;", " {skin.likes}" }
-                                    div { style: "display: flex; align-items: center; gap: 0.2rem;", " {skin.views}" }
-                                    div { style: "display: flex; align-items: center; gap: 0.2rem;", " {skin.downloads}" }
-                                    div { style: "display: flex; align-items: center; gap: 0.2rem;", " {skin.comments}" }
-                                }
-                            }
-                        }
-
-                        CardContent {
-                            style: "padding: 10px; display: flex; justify-content: center; align-items: center;",
-
-
-                            img {
-                                src: "{skin.get_thumbnail()}",
-                                style: "display: block; max-width: 90%; height: auto; border-radius: 6px;"
-                            }
-                        }
-
-                        CardFooter {
-                            Button {
-                                variant: ButtonVariant::Secondary,
-                                style: "width: 100%; margin: 0 auto;",
-                                "Install Skin ({(skin.file.size as f32 / 1_000_000.0).round()} MB)"
-                            }
-                        }
-                    }
+            for index in 0..page.read().data.list.len() {
+                ShowSkin {
+                    skin_signal: page.map(move |p| &p.data.list[index])
                 }
-            })}
+            }
         }
     }
 }
 
-// #[component]
-// pub fn MainPanel() -> Element {
-//     let mut skin = use_signal(|| Skin::default());
-//     let mut skin_url = use_signal(|| String::new());
-//     let mut error_message = use_signal(|| String::new());
-//     rsx! {
-//         h1 { "War Thunder Skin Manager" }
+#[component]
+pub fn ShowSkin(skin_signal: ReadSignal<Skin>) -> Element {
+    let skin = skin_signal.read();
 
-//         Card { style: "margin: 0 auto; width: 100%; max-width: 80vw;",
-//             CardContent {
-//                 div { style: "display: flex; flex-direction: column; gap: 1.5rem;",
-//                     div { style: "display: grid; gap: 0.5rem;",
-//                         Label { html_for: "skin-url", "Skin Url" }
-//                         Input {
-//                             name: "skin-url",
-//                             placeholder: "https://live.warthunder.com/post/1163567/en/",
-//                             value: "{skin_url}",
-//                             oninput: move |e: FormEvent| skin_url.set(e.value()),
-//                         }
-//                     }
-//                 }
-//             }
-//             CardFooter { style: "flex-direction: column; gap: 0.5rem;",
-//                 Button {
-//                     variant: ButtonVariant::Primary,
-//                     onclick: move |_| {
-//                         let url = skin_url.read().clone();
+    // Notification on skin installation
+    let toast = use_toast();
 
-//                         spawn(async move {
-//                             match fetch_skin(&url).await {
-//                                 Ok(fetched_skin) => {
-//                                     skin.set(fetched_skin);
-//                                     error_message.set(String::new());
-//                                 }
-//                                 Err(err) => {
-//                                     error_message.set(format!("Erreur : {err}"));
-//                                 }
-//                             }
-//                         });
-//                     },
-//                     "Fetch"
-//                 }
-//             }
-//         }
+    rsx! {
+        div {
+            key: "{skin.file.name}{skin.file.size}",
+            style: "display: inline-block; width: 100%; break-inside: avoid; margin-bottom: 1.5rem;",
 
-//         if !error_message.read().is_empty() {
-//             p { style: "color: red;", "{error_message}" }
-//         }
+            Card {
+                style: "width: 100%; display: flex; flex-direction: column; overflow: hidden; margin: 0;",
 
-//         if *skin.read() != Skin::default() {
-//             SkinCard { fetched_skin: skin }
-//             SkinCard { fetched_skin: skin }
-//         }
-//     }
-// }
+                CardHeader {
+                    CardTitle { "Author: {skin.author.nickname}" }
+                    CardDescription {
+                        div { style: "display: flex; flex-direction: row; align-items: center; gap: 0.8rem; font-size: 0.85rem;",
+                            div { style: "display: flex; align-items: center; gap: 0.2rem;", " {skin.likes}" }
+                            div { style: "display: flex; align-items: center; gap: 0.2rem;", " {skin.views}" }
+                            div { style: "display: flex; align-items: center; gap: 0.2rem;", " {skin.downloads}" }
+                            div { style: "display: flex; align-items: center; gap: 0.2rem;", " {skin.comments}" }
+                        }
+                    }
+                }
 
-// #[component]
-// pub fn SkinCard(fetched_skin: Signal<Skin>) -> Element {
-//     rsx! {
-//         Separator {
-//             style: "margin: 25px auto; width: 50%;",
-//             horizontal: true,
-//             decorative: true,
-//         }
+                CardContent {
+                    style: "padding: 10px; display: flex; justify-content: center; align-items: center;",
 
-//         Card {  style: "margin: 0 auto; width: 100%; max-width: 80vw;",
-//             // CardHeader {
-//             //     CardTitle { "{fetched_skin.read().title}"  }
-//             // }
+                    img {
+                        src: "{skin.get_thumbnail()}",
+                        style: "display: block; max-width: 90%; height: auto; border-radius: 6px;"
+                    }
+                }
 
-//             CardContent {
-//                 div { style: "display: flex; flex-direction: row; justify-content: space-between; align-items: center; gap: 1.5rem; width: 100%;",
+                CardFooter {
+                    Button {
+                        variant: ButtonVariant::Secondary,
+                        style: "width: 100%; margin: 0 auto;",
+                        onclick: move |_| {
+                            let file_link = skin_signal.read().file.link.clone();
 
-//                     div { style: "display: grid; gap: 0.5rem;",
-//                         ul {
-//                             li { "Author : {fetched_skin.read().author.nickname}" }
-//                             li { "Likes : {fetched_skin.read().likes}" }
-//                             li { "Views: {fetched_skin.read().views}" }
-//                             li { "Downloads : {fetched_skin.read().downloads}" }
-//                             li { "Comments: {fetched_skin.read().comments}" }
+                            toast.info(
+                                "Information".to_string(),
+                                ToastOptions::new()
+                                    .description(format!("Downloading skin..."))
+                                    .duration(Duration::from_secs(5))
+                                    .permanent(false)
+                            );
 
-//                             li {
-//                                 "Download:"
-//                                 ul {
-//                                     li { "Filename: {fetched_skin.read().file.name}" }
-//                                         li {"Size: {(fetched_skin.read().file.size as f32 / 1e6 as f32).round()} MB" }
+                            spawn(async move {
+                                install_skin(&file_link).await;
 
-//                                 }
-//                             }
-//                         }
-//                     }
-//                     img {
-//                         src: "{fetched_skin.read().get_thumbnail()}",
-//                         style: "max-width: 35%; height: auto; border-radius: 6px;"
-//                     }
-//                 }
-//             }
-
-//             CardFooter { style: "flex-direction: column; gap: 0.5rem;",
-//                 Button { variant: ButtonVariant::Secondary, "Install Skin ({(fetched_skin.read().file.size as f32 / 1e6 as f32).round()} MB)" }
-//             }
-
-//         }
-//     }
-// }
+                                toast.success(
+                                    "Success".to_string(),
+                                    ToastOptions::new()
+                                        .description(format!("Skin installed !"))
+                                        .duration(Duration::from_secs(5))
+                                        .permanent(false)
+                                );
+                            });
+                        },
+                        "Install Skin ({(skin.file.size as f32 / 1_000_000.0).round()} MB)"
+                    }
+                }
+            }
+        }
+    }
+}

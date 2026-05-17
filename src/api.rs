@@ -1,8 +1,9 @@
 use regex::Regex;
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use std::str::FromStr;
 
+// --- SKIN ---
 #[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
 pub struct Author {
     pub nickname: String,
@@ -32,6 +33,24 @@ pub struct Skin {
     pub file: File,
 }
 
+impl Skin {
+    pub fn get_thumbnail(&self) -> &str {
+        match self.images.get(0) {
+            Some(img) => &img.src,
+            None => "https://media1.tenor.com/m/tlu3haOgKwsAAAAC/horse-wine.gif", // Fallback
+        }
+    }
+}
+
+impl FromStr for Skin {
+    type Err = String;
+    fn from_str(s: &str) -> std::prelude::v1::Result<Self, Self::Err> {
+        Ok(serde_json::from_str(s).unwrap_or_default())
+    }
+}
+// ------------
+
+// --- PAGE ---
 #[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
 pub struct Data {
     pub list: Vec<Skin>,
@@ -43,73 +62,49 @@ pub struct Data {
 pub struct Page {
     pub data: Data,
 }
+// ------------
 
-impl Skin {
-    pub fn get_thumbnail(&self) -> String {
-        match self.images.get(0) {
-            Some(img) => img.src.clone(),
-            None => String::from("https://media1.tenor.com/m/tlu3haOgKwsAAAAC/horse-wine.gif"),
-        }
-    }
+// --- FILTERS ---
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
+pub struct DepType {
+    #[serde(rename = "vehicleCountry")]
+    pub vehicle_country: Option<Vec<String>>,
+    #[serde(rename = "vehicleType")]
+    pub vehicle_type: Option<Vec<String>>,
+    #[serde(rename = "vehicleClass")]
+    pub vehicle_class: Option<Vec<String>>,
 }
 
-impl FromStr for Skin {
-    type Err = String;
-    fn from_str(s: &str) -> std::prelude::v1::Result<Self, Self::Err> {
-        Ok(serde_json::from_str(s).unwrap_or_default())
-    }
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
+pub struct Variant {
+    pub value: Option<String>,
+    pub name: String,
+    pub count: Option<i32>,
+    pub dep: Option<DepType>,
 }
 
-pub async fn fetch_skin(url: &str) -> std::prelude::v1::Result<Skin, String> {
-    if url.is_empty() {
-        return Err("Empty Url".to_string());
-    }
-
-    let client = reqwest::Client::new();
-
-    // https://live.warthunder.com/post/1175341/en/ ->
-    let url_components: Vec<&str> = url.split("/").collect();
-    let params = [
-        ("lang_group", url_components[4]),
-        ("language", url_components[5]),
-    ];
-
-    let res = client
-        .post("https://live.warthunder.com/api/posts/get/")
-        .header(
-            "User-Agent",
-            "Mozilla/5.0 (X11; Linux x86_64; rv:150.0) Gecko/20100101 Firefox/150.0",
-        )
-        .form(&params)
-        .send()
-        .await
-        .map_err(|e| format!("Erreur réseau : {e}"))?;
-
-    let body_text = res.text().await.map_err(|e| e.to_string())?;
-
-    Skin::from_str(&body_text)
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
+pub struct FilterType {
+    pub placeholder: String,
+    pub variants: Vec<Variant>,
 }
 
-pub async fn fetch_filters() -> Result<Value, String> {
-    // curl 'https://live.warthunder.com/api/feed/get_head/' \
-    //   --compressed \
-    //   -X POST \
-    //   -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:150.0) Gecko/20100101 Firefox/150.0' \
-    //   -H 'Accept: text/plain, */*; q=0.01' \
-    //   -H 'Accept-Language: fr,fr-FR;q=0.9,en-US;q=0.8,en;q=0.7' \
-    //   -H 'Accept-Encoding: gzip, deflate, br, zstd' \
-    //   -H 'Referer: https://live.warthunder.com/feed/all/' \
-    //   -H 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8' \
-    //   -H 'Origin: https://live.warthunder.com' \
-    //   -H 'Connection: keep-alive' \
-    //   -H 'Cookie: conntrack=jlsI/mjyfZ9f1lnCAwvSAg==; lang=en' \
-    //   -H 'Sec-Fetch-Dest: empty' \
-    //   -H 'Sec-Fetch-Mode: cors' \
-    //   -H 'Sec-Fetch-Site: same-origin' \
-    //   -H 'Priority: u=0' \
-    //   -H 'TE: trailers' \
-    //   --data-raw 'content=camouflage&sort=rating&user=&period=7&searchString=&page=0&featured=0&subtype=all'
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
+pub struct Filters {
+    #[serde(rename = "vehicleCountry")]
+    pub vehicle_country: FilterType,
 
+    #[serde(rename = "vehicleType")]
+    pub vehicle_type: FilterType,
+
+    #[serde(rename = "vehicleClass")]
+    pub vehicle_class: FilterType,
+
+    pub vehicle: FilterType,
+}
+// ---------------
+
+pub async fn fetch_filters(client: Client) -> Result<Filters, String> {
     let params = [
         ("content", "camouflage"),
         ("sort", "rating"),
@@ -120,8 +115,6 @@ pub async fn fetch_filters() -> Result<Value, String> {
         ("featured", "0"),
         ("subtype", "all"),
     ];
-
-    let client = reqwest::Client::new();
 
     let res = client
         .post("https://live.warthunder.com/api/feed/get_head/")
@@ -143,40 +136,22 @@ pub async fn fetch_filters() -> Result<Value, String> {
         results = json.to_string();
     }
 
-    let json_filers: Value = serde_json::from_str(&results).unwrap_or_default();
-    // println!("{}", json_filers);
-    Ok(json_filers)
+    let json_filters: Filters = tokio::task::spawn_blocking(move || serde_json::from_str(&results))
+        .await
+        .map_err(|_| "Thread pool error".to_string())?
+        .map_err(|e| format!("Failed to parse JSON: {e}"))?;
+
+    Ok(json_filters)
 }
 
 pub async fn fetch_page(
-    country: &str,
+    client: Client,
+    vehicle_country: &str,
     vehicle_type: &str,
+    vehicle_class: &str,
+    vehicle: &str,
     page: i32,
 ) -> std::prelude::v1::Result<Page, String> {
-    // if country.is_empty() || vehicle_type.is_empty() {
-    //     return Err("All parameters are required".to_string());
-    // }
-
-    let client = reqwest::Client::new();
-
-    // curl 'https://live.warthunder.com/api/feed/get_regular/' \
-    //   --compressed \
-    //   -X POST \
-    //   -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:150.0) Gecko/20100101 Firefox/150.0' \
-    //   -H 'Accept: application/json, text/javascript, */*; q=0.01' \
-    //   -H 'Accept-Language: fr,fr-FR;q=0.9,en-US;q=0.8,en;q=0.7' \
-    //   -H 'Accept-Encoding: gzip, deflate, br, zstd' \
-    //   -H 'Referer: https://live.warthunder.com/feed/camouflages/?vehicleCountry=france&vehicleType=aircraft' \
-    //   -H 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8' \
-    //   -H 'Origin: https://live.warthunder.com' \
-    //   -H 'Connection: keep-alive' \
-    //   -H 'Cookie: conntrack=jlsI/mjyfZ9f1lnCAwvSAg==; lang=en' \
-    //   -H 'Sec-Fetch-Dest: empty' \
-    //   -H 'Sec-Fetch-Mode: cors' \
-    //   -H 'Sec-Fetch-Site: same-origin' \
-    //   -H 'TE: trailers' \
-    //   --data-raw 'content=camouflage&sort=rating&user=&period=7&searchString=&page=0&featured=0&subtype=all&vehicleCountry=france&vehicleType=aircraft'
-
     let params = [
         ("content", "camouflage"),
         ("sort", "rating"),
@@ -186,9 +161,13 @@ pub async fn fetch_page(
         ("featured", "0"),
         ("subtype", "all"),
         ("page", &page.to_string()),
-        ("vehicleCountry", country),
+        ("vehicleCountry", vehicle_country),
         ("vehicleType", vehicle_type),
+        ("vehicleClass", vehicle_class),
+        ("vehicle", vehicle),
     ];
+
+    // println!("{:?}", params);
 
     let res = client
         .post("https://live.warthunder.com/api/feed/get_regular/")
@@ -204,7 +183,8 @@ pub async fn fetch_page(
 
     let body_text = res.text().await.map_err(|e| e.to_string())?;
 
-    let page: Page = serde_json::from_str(&body_text).unwrap_or_default();
+    let page: Page =
+        serde_json::from_str(&body_text).map_err(|e| format!("Failed to parse JSON: {e}"))?;
 
     // println!("{:?}", page);
 
