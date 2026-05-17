@@ -54,11 +54,14 @@ fn App() -> Element {
     let open = use_signal(|| user_config.read().is_err());
     let confirmed = use_signal(|| false);
 
+    provide_context(user_config);
+    provide_context(game_dir);
+
     rsx! {
         document::Link { rel: "icon", href: FAVICON }
         document::Link { rel: "stylesheet", href: MAIN_CSS }
         document::Link { rel: "stylesheet", href: ASSETS_CSS }
-        ConfigModal { open, confirmed, game_dir, user_config }
+        ConfigModal { open, confirmed }
         Store { }
     }
 }
@@ -67,9 +70,11 @@ fn App() -> Element {
 pub fn ConfigModal(
     open: Signal<bool>,
     confirmed: Signal<bool>,
-    game_dir: Signal<String>,
-    user_config: Signal<Result<Config, String>>,
 ) -> Element {
+
+    let mut user_config = use_context::<Signal<Result<Config, String>>>();
+    let mut game_dir = use_context::<Signal<String>>();
+
     rsx! {
         AlertDialog { open: open(), on_open_change: move |v| open.set(v),
             AlertDialogTitle { "No config detected !" }
@@ -480,6 +485,8 @@ pub fn ShowPage(page: Signal<Page>) -> Element {
 pub fn ShowSkin(skin_signal: ReadSignal<Skin>) -> Element {
     let skin = skin_signal.read();
 
+    let user_config = use_context::<Signal<Result<Config, String>>>();
+
     // Notification on skin installation
     let toast = use_toast();
 
@@ -528,8 +535,16 @@ pub fn ShowSkin(skin_signal: ReadSignal<Skin>) -> Element {
                                     .permanent(false)
                             );
 
+                            let game_dir = match &*user_config.read() {
+                                Ok(config) => config.game_dir.clone(),
+                                Err(e) => {
+                                    toast.error("Config Error".to_string(), ToastOptions::new().description(e.to_string()));
+                                    return;
+                                }
+                            };
+
                             spawn(async move {
-                                match install_skin(&file_link, &filename).await {
+                                match install_skin(&game_dir, &file_link, &filename).await {
                                     Ok(msg) => {
                                         toast.success(
                                             "Success".to_string(),

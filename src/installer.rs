@@ -4,11 +4,10 @@ use std::path::Path;
 use zip::result::ZipError;
 use zip::ZipArchive;
 
-pub async fn install_skin(file_link: &str, filename: &str) -> Result<String, String> {
+pub async fn install_skin(game_dir: &str, file_link: &str, filename: &str) -> Result<String, String> {
     let resp = reqwest::get(file_link).await.map_err(|e| e.to_string())?;
     let content = resp.bytes().await.map_err(|e| e.to_string())?;
 
-    let game_dir = "/home/slyvred/Documents/WarThunder/UserSkins";
     let str_path = format!("{}/{}", game_dir, filename);
     let path = Path::new(&str_path);
 
