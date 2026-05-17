@@ -3,8 +3,6 @@ pub mod button;
 pub mod input;
 pub mod label;
 pub mod card;
-pub mod separator;
-pub mod avatar;
 pub mod combobox;
 pub mod pagination;
 pub mod toast;

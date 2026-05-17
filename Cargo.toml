@@ -28,3 +28,10 @@ debug = false
 panic = "abort"
 opt-level = "z"
 codegen-units = 1
+
+[target.x86_64-pc-windows-gnu]
+rustflags = [
+    "-C", "link-arg=/SUBSYSTEM:WINDOWS",
+    "-C", "link-arg=/ENTRY:mainCRTStartup",
+]
+linker = "x86_64-w64-mingw-w64-gcc"
