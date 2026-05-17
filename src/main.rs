@@ -1,15 +1,15 @@
+mod api;
+mod components;
+mod installer;
+
 use dioxus::prelude::*;
 use reqwest::Client;
-use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-mod installer;
+use api::{fetch_filters, fetch_page, Filters, Page, Skin};
 use dioxus_primitives::toast::{use_toast, ToastOptions};
 use installer::install_skin;
-mod api;
-use crate::api::{fetch_filters, fetch_page, Filters, Page, Skin};
 
-mod components;
 use crate::components::button::*;
 use crate::components::card::*;
 use crate::components::combobox::*;
@@ -36,7 +36,7 @@ fn App() -> Element {
 
 #[component]
 pub fn Store() -> Element {
-    let mut client = use_signal(|| Client::new());
+    let client = use_signal(|| Client::new());
 
     let mut vehicle_country_query = use_signal(String::new);
     let mut vehicle_country_value = use_signal(|| None::<String>);
@@ -99,7 +99,13 @@ pub fn Store() -> Element {
             Combobox::<String> {
                 value: Some(vehicle_country_value.into()),
                 on_value_change: move |next: Option<String>| {
-                    vehicle_country_value.set(next);
+                    let update = {
+                        let current = vehicle_country_value.read();
+                        *current != next
+                    };
+                    if update {
+                        vehicle_country_value.set(next);
+                    }
                 },
                 query: Some(vehicle_country_query()),
                 on_query_change: move |next| vehicle_country_query.set(next),
@@ -134,7 +140,13 @@ pub fn Store() -> Element {
                 style: "margin-left: 0.5rem;",
                 value: Some(vehicle_type_value.into()),
                 on_value_change: move |next: Option<String>| {
-                    vehicle_type_value.set(next);
+                    let update = {
+                        let current = vehicle_type_value.read();
+                        *current != next
+                    };
+                    if update {
+                        vehicle_type_value.set(next);
+                    }
                 },
                 query: Some(vehicle_type_query()),
                 on_query_change: move |next| vehicle_type_query.set(next),
@@ -169,7 +181,13 @@ pub fn Store() -> Element {
                 style: "margin-left: 0.5rem;",
                 value: Some(vehicle_class_value.into()),
                 on_value_change: move |next: Option<String>| {
-                    vehicle_class_value.set(next);
+                    let update = {
+                        let current = vehicle_class_value.read();
+                        *current != next
+                    };
+                    if update {
+                        vehicle_class_value.set(next);
+                    }
                 },
                 query: Some(vehicle_class_query()),
                 on_query_change: move |next| vehicle_class_query.set(next),
@@ -230,7 +248,13 @@ pub fn Store() -> Element {
                 style: "margin-left: 0.5rem;",
                 value: Some(vehicle_value.into()),
                 on_value_change: move |next: Option<String>| {
-                    vehicle_value.set(next);
+                    let update = {
+                        let current = vehicle_value.read();
+                        *current != next
+                    };
+                    if update {
+                        vehicle_value.set(next);
+                    }
                 },
                 query: Some(vehicle_query()),
                 on_query_change: move |next| vehicle_query.set(next),
@@ -328,7 +352,7 @@ pub fn Store() -> Element {
         Pagination {
             style: "position: fixed; bottom: 1.25rem; margin: 0 auto;",
             PaginationContent {
-                style: "background-color: #0f1116; border-radius: 10px; padding: 0.3rem",
+                style: "background-color: #0f1116; border-radius: 10px; padding: 0.3rem;",
                 PaginationItem {
                     PaginationPrevious {
                         onclick: move |_| {
