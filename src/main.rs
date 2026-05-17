@@ -45,14 +45,16 @@ pub fn Store() -> Element {
     let mut active_page = use_signal(|| 0);
 
     let search_action = move |target_page: i32| {
-        let country = country_value.read().clone().unwrap_or_default();
-        let vehicle = vehicle_type_value.read().clone().unwrap_or_default();
-
         spawn(async move {
-            match fetch_page(&country, &vehicle, target_page).await {
+            match fetch_page(
+                country_value.read().as_deref().unwrap_or_default(),
+                vehicle_type_value.read().as_deref().unwrap_or_default(),
+                target_page,
+            )
+            .await
+            {
                 Ok(fetched_page) => {
                     page.set(fetched_page);
-                    error_message.set(String::new());
                 }
                 Err(err) => {
                     error_message.set(format!("Erreur : {err}"));
@@ -76,80 +78,83 @@ pub fn Store() -> Element {
     });
 
     rsx! {
-        Combobox::<String> {
-            value: Some(country_value.into()),
-            on_value_change: move |next: Option<String>| {
-                country_value.set(next);
-            },
-            query: Some(country_query()),
-            on_query_change: move |next| country_query.set(next),
-            placeholder: "Country",
-            aria_label: "Country",
-            list_aria_label: "Countries",
-            ComboboxEmpty { "No country found." }
+        div {
+            style: "position: fixed; top: 1.25rem",
+            Combobox::<String> {
+                value: Some(country_value.into()),
+                on_value_change: move |next: Option<String>| {
+                    country_value.set(next);
+                },
+                query: Some(country_query()),
+                on_query_change: move |next| country_query.set(next),
+                placeholder: "Country",
+                aria_label: "Country",
+                list_aria_label: "Countries",
+                ComboboxEmpty { "No country found." }
 
-            if let Some(variants) = filters.read()["vehicleCountry"]["variants"].as_array() {
-                { variants.iter().enumerate().map(|(i, country)| {
-                    let value = country["value"].as_str().unwrap_or_default();
-                    let name = country["name"].as_str().unwrap_or_default();
-                    let count = country["count"].as_i64().unwrap_or_default();
-                    let label = format!("{} ({})", name, count);
+                if let Some(variants) = filters.read()["vehicleCountry"]["variants"].as_array() {
+                    { variants.iter().enumerate().map(|(i, country)| {
+                        let value = country["value"].as_str().unwrap_or_default();
+                        let name = country["name"].as_str().unwrap_or_default();
+                        let count = country["count"].as_i64().unwrap_or_default();
+                        let label = format!("{} ({})", name, count);
 
-                    rsx! {
-                        ComboboxOption::<String> {
-                            key: "{value}",
-                            index: i,
-                            value: value.to_string(),
-                            text_value: name.to_string(),
-                            "{label}"
+                        rsx! {
+                            ComboboxOption::<String> {
+                                key: "{value}",
+                                index: i,
+                                value: value.to_string(),
+                                text_value: name.to_string(),
+                                "{label}"
+                            }
                         }
-                    }
-                })}
+                    })}
+                }
             }
-        }
 
-        Combobox::<String> {
-            style: "margin-left: 1vw;",
-            value: Some(vehicle_type_value.into()),
-            on_value_change: move |next: Option<String>| {
-                vehicle_type_value.set(next);
-            },
-            query: Some(vehicle_type_query()),
-            on_query_change: move |next| vehicle_type_query.set(next),
-            placeholder: "Type",
-            aria_label: "Type",
-            list_aria_label: "Types",
-            ComboboxEmpty { "No type found." }
+            Combobox::<String> {
+                style: "margin-left: 0.5rem;",
+                value: Some(vehicle_type_value.into()),
+                on_value_change: move |next: Option<String>| {
+                    vehicle_type_value.set(next);
+                },
+                query: Some(vehicle_type_query()),
+                on_query_change: move |next| vehicle_type_query.set(next),
+                placeholder: "Type",
+                aria_label: "Type",
+                list_aria_label: "Types",
+                ComboboxEmpty { "No type found." }
 
-            if let Some(variants) = filters.read()["vehicleType"]["variants"].as_array() {
-                { variants.iter().enumerate().map(|(i, vehicule_type)| {
-                    let value = vehicule_type["value"].as_str().unwrap_or_default();
-                    let name = vehicule_type["name"].as_str().unwrap_or_default();
-                    let count = vehicule_type["count"].as_i64().unwrap_or_default();
-                    let label = format!("{} ({})", name, count);
+                if let Some(variants) = filters.read()["vehicleType"]["variants"].as_array() {
+                    { variants.iter().enumerate().map(|(i, vehicule_type)| {
+                        let value = vehicule_type["value"].as_str().unwrap_or_default();
+                        let name = vehicule_type["name"].as_str().unwrap_or_default();
+                        let count = vehicule_type["count"].as_i64().unwrap_or_default();
+                        let label = format!("{} ({})", name, count);
 
-                    rsx! {
-                        ComboboxOption::<String> {
-                            key: "{value}",
-                            index: i,
-                            value: value.to_string(),
-                            text_value: name.to_string(),
-                            "{label}"
+                        rsx! {
+                            ComboboxOption::<String> {
+                                key: "{value}",
+                                index: i,
+                                value: value.to_string(),
+                                text_value: name.to_string(),
+                                "{label}"
+                            }
                         }
-                    }
-                })}
+                    })}
+                }
             }
-        }
 
-        Button {
-            style: "margin-left: 1vw;",
-            variant: ButtonVariant::Secondary,
-            onclick: move |_| {
-                // Quand on fait une nouvelle recherche, on repart de la page 0
-                active_page.set(0);
-                search_action(0);
-            },
-            "Search",
+            Button {
+                style: "margin-left: 0.5rem;",
+                variant: ButtonVariant::Secondary,
+                onclick: move |_| {
+                    // Quand on fait une nouvelle recherche, on repart de la page 0
+                    active_page.set(0);
+                    search_action(0);
+                },
+                "Search",
+            }
         }
 
         if !error_message.read().is_empty() {
@@ -161,7 +166,9 @@ pub fn Store() -> Element {
         }
 
         Pagination {
+            style: "position: fixed; bottom: 1.25rem; margin: 0 auto;",
             PaginationContent {
+                style: "background-color: var(--background); border-radius: 10px; padding: 0.3rem",
                 PaginationItem {
                     PaginationPrevious {
                         onclick: move |_| {
@@ -194,31 +201,49 @@ pub fn Store() -> Element {
 #[component]
 pub fn ShowPage(page: Signal<Page>) -> Element {
     rsx! {
-        div { style: "display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2rem; padding: 25px; width: 100%; max-width: 95vw; margin: 0 auto;",
+        div {
+            style: "display: flex; flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 2rem; padding: 25px; width: 100%; max-width: 95vw; margin: 0 auto;",
 
             { page.read().data.list.iter().map(|skin| rsx! {
 
                 div {
-                    // key: "{skin.file.name}{skin.author.nickname}",
-                    style: "width: 100%; display: flex; flex-direction: column;",
+                    key: "{skin.file.name}{skin.file.size}",
+                    style: "width: fit-content; display: flex; flex-direction: column;",
 
                     Card {
-                        style: "width: 100%; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;",
+                        style: "width: fit-content; max-width: 300px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 1rem;",
+
+                        CardHeader {
+                            CardTitle { "Author : {skin.author.nickname}" }
+                            CardDescription {
+                                // "{skin.likes} {skin.views} {skin.downloads} {skin.comments}"
+
+                                div {
+                                    style: "display: flex; flex-direction: row; align-items: center; gap: 1rem;",
+
+                                    div { style: "display: flex; align-items: center; gap: 0.3rem;",
+                                        " {skin.likes}"
+                                    }
+
+                                    div { style: "display: flex; align-items: center; gap: 0.3rem;",
+                                        " {skin.views}"
+                                    }
+
+                                    div { style: "display: flex; align-items: center; gap: 0.3rem;",
+                                        " {skin.downloads}"
+                                    }
+
+                                    div { style: "display: flex; align-items: center; gap: 0.3rem;",
+                                        " {skin.comments}"
+                                    }
+                                }
+                            }
+                        }
 
                         CardContent {
-                            style: "display: flex; flex-direction: row; align-items: center; gap: 1rem; width: 100%;",
-
                             img {
                                 src: "{skin.get_thumbnail()}",
-                                style: "display: block; max-height: 250px; width: auto; max-width: 100%; border-radius: 6px; margin: 0 auto;"
-                            }
-
-                            ul { style: "display: grid; gap: 0.2rem; width: 100%; font-size: 0.85rem;",
-                                li { "Author : {skin.author.nickname}" }
-                                li { "Likes : {skin.likes}" }
-                                li { "Views: {skin.views}" }
-                                li { "Downloads : {skin.downloads}" }
-                                li { "Comments: {skin.comments}" }
+                                style: "display: block; max-height: 280px; width: auto; max-width: 100%; border-radius: 6px;"
                             }
                         }
 

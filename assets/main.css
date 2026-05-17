@@ -1,17 +1,15 @@
-/* App-wide styling */
-body {
-    background-color: #0f1116;
-    color: #ffffff;
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-    margin: 20px;
+:root {
+    --foreground: #cdd6f4;
+    --background: #181824;
 }
 
-#hero {
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+body {
+    background-color: #0f1116;
+    color: var(--foreground);
+    font-family:
+        "CaskaydiaMono Nerd Font", "Segoe UI", Tahoma, Geneva, Verdana,
+        sans-serif;
+    margin: 20px;
 }
 
 #links {
@@ -40,30 +38,4 @@ body {
 
 #header {
     max-width: 1200px;
-}
-
-.input-url {
-    field-sizing: content;
-    min-width: 20vw;
-    padding: 4px;
-}
-
-.btn {
-    padding: 4px;
-    margin-left: 2px;
-    transition: 100ms;
-}
-
-.btn:hover {
-    scale: 1.1;
-}
-
-.btn:active {
-    transform: translateY(-2px);
-}
-
-.skin-details {
-    border: 2px solid royalblue;
-    padding: 10px;
-    border-radius: 10px;
 }
