@@ -10,6 +10,7 @@ use crate::components::card::*;
 use crate::components::combobox::*;
 use crate::components::input::*;
 use crate::components::label::*;
+use crate::components::pagination::*;
 use crate::components::separator::*;
 
 const FAVICON: Asset = asset!("/assets/favicon.ico");
@@ -41,6 +42,24 @@ pub fn Store() -> Element {
     let mut error_message = use_signal(|| String::new());
 
     let mut filters = use_signal(|| serde_json::json!({}));
+    let mut active_page = use_signal(|| 0);
+
+    let search_action = move |target_page: i32| {
+        let country = country_value.read().clone().unwrap_or_default();
+        let vehicle = vehicle_type_value.read().clone().unwrap_or_default();
+
+        spawn(async move {
+            match fetch_page(&country, &vehicle, target_page).await {
+                Ok(fetched_page) => {
+                    page.set(fetched_page);
+                    error_message.set(String::new());
+                }
+                Err(err) => {
+                    error_message.set(format!("Erreur : {err}"));
+                }
+            }
+        });
+    };
 
     use_hook(move || {
         spawn(async move {
@@ -56,28 +75,6 @@ pub fn Store() -> Element {
         });
     });
 
-    let countries: &[(&str, &str)] = &[
-        ("", "Any"),
-        ("britain", "Great Britain"),
-        ("china", "China"),
-        ("france", "France"),
-        ("germany", "Germany"),
-        ("italy", "Italy"),
-        ("japan", "Japan"),
-        ("south_africa", "South Africa"),
-        ("sweden", "Sweden"),
-        ("usa", "USA"),
-        ("ussr", "USSR"),
-    ];
-
-    let vehicle_types: &[(&str, &str)] = &[
-        ("", "Any"),
-        ("aircraft", "Aircraft"),
-        ("helicopter", "Helicopter"),
-        ("ship", "Ships"),
-        ("tank", "Tanks"),
-    ];
-
     rsx! {
         Combobox::<String> {
             value: Some(country_value.into()),
@@ -90,13 +87,24 @@ pub fn Store() -> Element {
             aria_label: "Country",
             list_aria_label: "Countries",
             ComboboxEmpty { "No country found." }
-            for (i , (value , label)) in countries.iter().enumerate() {
-                ComboboxOption::<String> {
-                    index: i,
-                    value: value.to_string(),
-                    text_value: label.to_string(),
-                    {*label}
-                }
+
+            if let Some(variants) = filters.read()["vehicleCountry"]["variants"].as_array() {
+                { variants.iter().enumerate().map(|(i, country)| {
+                    let value = country["value"].as_str().unwrap_or_default();
+                    let name = country["name"].as_str().unwrap_or_default();
+                    let count = country["count"].as_i64().unwrap_or_default();
+                    let label = format!("{} ({})", name, count);
+
+                    rsx! {
+                        ComboboxOption::<String> {
+                            key: "{value}",
+                            index: i,
+                            value: value.to_string(),
+                            text_value: name.to_string(),
+                            "{label}"
+                        }
+                    }
+                })}
             }
         }
 
@@ -112,13 +120,24 @@ pub fn Store() -> Element {
             aria_label: "Type",
             list_aria_label: "Types",
             ComboboxEmpty { "No type found." }
-            for (i , (value , label)) in vehicle_types.iter().enumerate() {
-                ComboboxOption::<String> {
-                    index: i,
-                    value: value.to_string(),
-                    text_value: label.to_string(),
-                    {*label}
-                }
+
+            if let Some(variants) = filters.read()["vehicleType"]["variants"].as_array() {
+                { variants.iter().enumerate().map(|(i, vehicule_type)| {
+                    let value = vehicule_type["value"].as_str().unwrap_or_default();
+                    let name = vehicule_type["name"].as_str().unwrap_or_default();
+                    let count = vehicule_type["count"].as_i64().unwrap_or_default();
+                    let label = format!("{} ({})", name, count);
+
+                    rsx! {
+                        ComboboxOption::<String> {
+                            key: "{value}",
+                            index: i,
+                            value: value.to_string(),
+                            text_value: name.to_string(),
+                            "{label}"
+                        }
+                    }
+                })}
             }
         }
 
@@ -126,20 +145,9 @@ pub fn Store() -> Element {
             style: "margin-left: 1vw;",
             variant: ButtonVariant::Secondary,
             onclick: move |_| {
-                let country = country_value.read().clone().unwrap_or_default();
-                let vehicle = vehicle_type_value.read().clone().unwrap_or_default();
-
-                spawn(async move {
-                    match fetch_page(&country, &vehicle, 0).await {
-                        Ok(fetched_page) => {
-                            page.set(fetched_page);
-                            error_message.set(String::new());
-                        }
-                        Err(err) => {
-                            error_message.set(format!("Erreur : {err}"));
-                        }
-                    }
-                });
+                // Quand on fait une nouvelle recherche, on repart de la page 0
+                active_page.set(0);
+                search_action(0);
             },
             "Search",
         }
@@ -149,7 +157,36 @@ pub fn Store() -> Element {
         }
 
         if *page.read() != Page::default() {
-            ShowPage { page: page}
+            ShowPage { page: page }
+        }
+
+        Pagination {
+            PaginationContent {
+                PaginationItem {
+                    PaginationPrevious {
+                        onclick: move |_| {
+                            let current = *active_page.read();
+                            if current > 0 {
+                                let next_p = current - 1;
+                                active_page.set(next_p);
+                                search_action(next_p); // On relance la recherche avec la page précédente
+                            }
+                        }
+                    }
+                }
+                PaginationItem {
+                    PaginationLink { is_active: true, "{active_page.read()}"}
+                }
+                PaginationItem {
+                    PaginationNext {
+                        onclick: move |_| {
+                            let next_p = *active_page.read() + 1;
+                            active_page.set(next_p);
+                            search_action(next_p); // On relance la recherche avec la page suivante
+                        }
+                    }
+                }
+            }
         }
     }
 }
