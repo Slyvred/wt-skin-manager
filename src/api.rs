@@ -144,7 +144,7 @@ pub async fn fetch_filters() -> Result<Value, String> {
     }
 
     let json_filers: Value = serde_json::from_str(&results).unwrap_or_default();
-    println!("{}", json_filers);
+    // println!("{}", json_filers);
     Ok(json_filers)
 }
 
@@ -206,7 +206,7 @@ pub async fn fetch_page(
 
     let page: Page = serde_json::from_str(&body_text).unwrap_or_default();
 
-    println!("{:?}", page);
+    // println!("{:?}", page);
 
     Ok(page)
 }
