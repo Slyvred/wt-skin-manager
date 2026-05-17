@@ -8,3 +8,4 @@ pub mod avatar;
 pub mod combobox;
 pub mod pagination;
 pub mod toast;
+pub mod alert_dialog;

@@ -1,18 +1,26 @@
 mod api;
 mod components;
+mod config;
 mod installer;
 
+use dioxus::desktop::LogicalSize;
+use dioxus::desktop::WindowBuilder;
 use dioxus::prelude::*;
 use reqwest::Client;
+use std::path::Path;
 use std::time::Duration;
 
 use api::{fetch_filters, fetch_page, Filters, Page, Skin};
+use config::Config;
 use dioxus_primitives::toast::{use_toast, ToastOptions};
 use installer::install_skin;
 
+use crate::components::alert_dialog::*;
 use crate::components::button::*;
 use crate::components::card::*;
 use crate::components::combobox::*;
+use crate::components::input::*;
+use crate::components::label::*;
 use crate::components::pagination::*;
 use crate::components::toast::*;
 
@@ -21,16 +29,86 @@ const MAIN_CSS: Asset = asset!("/assets/main.css");
 const ASSETS_CSS: Asset = asset!("/assets/dx-components-theme.css");
 
 fn main() {
-    dioxus::launch(App);
+    let window = WindowBuilder::new()
+        .with_inner_size(LogicalSize::new(1024.0, 768.0))
+        .with_min_inner_size(LogicalSize::new(800.0, 600.0))
+        // .with_transparent(true)
+        // .with_decorations(false)
+        .with_title("War Thunder Camouflage Manager");
+
+    let config = dioxus::desktop::Config::new()
+        .with_menu(None)
+        .with_window(window);
+
+    dioxus::LaunchBuilder::desktop()
+        .with_cfg(config)
+        .launch(App);
 }
 
 #[component]
 fn App() -> Element {
+    let user_config = use_signal(|| Config::load_from_file("./config.json"));
+    let game_dir = use_signal(String::new);
+    let open = use_signal(|| user_config.read().is_err());
+    let confirmed = use_signal(|| false);
+
     rsx! {
         document::Link { rel: "icon", href: FAVICON }
         document::Link { rel: "stylesheet", href: MAIN_CSS }
         document::Link { rel: "stylesheet", href: ASSETS_CSS }
+        ConfigModal { open, confirmed, game_dir, user_config }
         Store { }
+    }
+}
+
+#[component]
+pub fn ConfigModal(
+    open: Signal<bool>,
+    confirmed: Signal<bool>,
+    game_dir: Signal<String>,
+    user_config: Signal<Result<Config, String>>,
+) -> Element {
+    rsx! {
+        AlertDialog { open: open(), on_open_change: move |v| open.set(v),
+            AlertDialogTitle { "No config detected !" }
+            AlertDialogDescription { "Please set your game installation's folder. This is where your camouflages will be downloaded and extracted." }
+            div { display: "flex", flex_direction: "column", gap: ".5rem",
+                Label { html_for: "Path", "gamedir" }
+                Input {
+                    id: "gamedir",
+                    oninput: move |e: FormEvent| game_dir.set(e.value()),
+                    placeholder: "Ex: /home/user/Games/WarThunder/UserSkins"
+                }
+            }
+            AlertDialogActions {
+                Button {
+                    variant: ButtonVariant::Primary,
+                    onclick: move |_| confirmed.set(true),
+                    "Save"
+                }
+            }
+        }
+        if confirmed() {
+            {
+                let game_dir = game_dir.read().clone();
+                let path = Path::new(&game_dir);
+                if path.exists() {
+                    open.set(false);
+                    let cfg = Config { version: "1.0.0".to_string(), game_dir: game_dir};
+                    let res = cfg.save();
+
+                    if res.is_err() {
+                        eprintln!("{:?}", res);
+                    }
+
+                    user_config.set(Ok(cfg));
+                }
+                else {
+                    confirmed.set(false);
+                }
+
+            }
+        }
     }
 }
 
@@ -385,7 +463,7 @@ pub fn Store() -> Element {
 #[component]
 pub fn ShowPage(page: Signal<Page>) -> Element {
     rsx! {
-        div { style: "columns: 3 280px; gap: 1.5rem; padding: 25px; width: 100%; max-width: 98vw; margin: 3rem auto 0 auto;",
+        div { style: "columns: 3 280px; gap: 1.5rem; padding: 25px; width: 100%; max-width: 98vw; margin: 3rem -1.5rem;",
 
             for index in 0..page.read().data.list.len() {
                 ShowSkin {
@@ -409,7 +487,7 @@ pub fn ShowSkin(skin_signal: ReadSignal<Skin>) -> Element {
             style: "display: inline-block; width: 100%; break-inside: avoid; margin-bottom: 1.5rem;",
 
             Card {
-                style: "width: 100%; display: flex; flex-direction: column; overflow: hidden; margin: 0;",
+                style: "width: 100%; display: flex; flex-direction: column; overflow: hidden;",
 
                 CardHeader {
                     CardTitle { "Author: {skin.author.nickname}" }
