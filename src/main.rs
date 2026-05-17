@@ -438,6 +438,7 @@ pub fn ShowSkin(skin_signal: ReadSignal<Skin>) -> Element {
                         style: "width: 100%; margin: 0 auto;",
                         onclick: move |_| {
                             let file_link = skin_signal.read().file.link.clone();
+                            let filename = skin_signal.read().file.name.clone();
 
                             toast.info(
                                 "Information".to_string(),
@@ -448,15 +449,26 @@ pub fn ShowSkin(skin_signal: ReadSignal<Skin>) -> Element {
                             );
 
                             spawn(async move {
-                                install_skin(&file_link).await;
-
-                                toast.success(
-                                    "Success".to_string(),
-                                    ToastOptions::new()
-                                        .description(format!("Skin installed !"))
-                                        .duration(Duration::from_secs(5))
-                                        .permanent(false)
-                                );
+                                match install_skin(&file_link, &filename).await {
+                                    Ok(msg) => {
+                                        toast.success(
+                                            "Success".to_string(),
+                                            ToastOptions::new()
+                                                .description(msg)
+                                                .duration(Duration::from_secs(5))
+                                                .permanent(false)
+                                        );
+                                    }
+                                    Err(err) => {
+                                        toast.error(
+                                            "Error".to_string(),
+                                            ToastOptions::new()
+                                                .description(err)
+                                                .duration(Duration::from_secs(5))
+                                                .permanent(false)
+                                        );
+                                    }
+                                }
                             });
                         },
                         "Install Skin ({(skin.file.size as f32 / 1_000_000.0).round()} MB)"
