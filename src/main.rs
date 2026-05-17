@@ -36,8 +36,10 @@ fn App() -> Element {
 pub fn Store() -> Element {
     let mut country_query = use_signal(String::new);
     let mut country_value = use_signal(|| None::<String>);
+
     let mut vehicle_type_query = use_signal(String::new);
     let mut vehicle_type_value = use_signal(|| None::<String>);
+
     let mut page = use_signal(|| Page::default());
     let mut error_message = use_signal(|| String::new());
 
@@ -201,57 +203,43 @@ pub fn Store() -> Element {
 #[component]
 pub fn ShowPage(page: Signal<Page>) -> Element {
     rsx! {
-        div {
-            style: "display: flex; flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 2rem; padding: 25px; width: 100%; max-width: 95vw; margin: 0 auto;",
+        div { style: "columns: 3 280px; gap: 1.5rem; padding: 25px; width: 100%; max-width: 98vw; margin: 0 auto;",
 
             { page.read().data.list.iter().map(|skin| rsx! {
 
                 div {
                     key: "{skin.file.name}{skin.file.size}",
-                    style: "width: fit-content; display: flex; flex-direction: column;",
+                    style: "display: inline-block; width: 100%; break-inside: avoid; margin-bottom: 1.5rem;",
 
                     Card {
-                        style: "width: fit-content; max-width: 300px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 1rem;",
+                        style: "width: 100%; display: flex; flex-direction: column; overflow: hidden; margin: 0;",
 
                         CardHeader {
                             CardTitle { "Author : {skin.author.nickname}" }
                             CardDescription {
-                                // "{skin.likes} {skin.views} {skin.downloads} {skin.comments}"
-
-                                div {
-                                    style: "display: flex; flex-direction: row; align-items: center; gap: 1rem;",
-
-                                    div { style: "display: flex; align-items: center; gap: 0.3rem;",
-                                        " {skin.likes}"
-                                    }
-
-                                    div { style: "display: flex; align-items: center; gap: 0.3rem;",
-                                        " {skin.views}"
-                                    }
-
-                                    div { style: "display: flex; align-items: center; gap: 0.3rem;",
-                                        " {skin.downloads}"
-                                    }
-
-                                    div { style: "display: flex; align-items: center; gap: 0.3rem;",
-                                        " {skin.comments}"
-                                    }
+                                div { style: "display: flex; flex-direction: row; align-items: center; gap: 0.8rem; font-size: 0.85rem;",
+                                    div { style: "display: flex; align-items: center; gap: 0.2rem;", " {skin.likes}" }
+                                    div { style: "display: flex; align-items: center; gap: 0.2rem;", " {skin.views}" }
+                                    div { style: "display: flex; align-items: center; gap: 0.2rem;", " {skin.downloads}" }
+                                    div { style: "display: flex; align-items: center; gap: 0.2rem;", " {skin.comments}" }
                                 }
                             }
                         }
 
                         CardContent {
+                            style: "padding: 10px; display: flex; justify-content: center; align-items: center;",
+
+
                             img {
                                 src: "{skin.get_thumbnail()}",
-                                style: "display: block; max-height: 280px; width: auto; max-width: 100%; border-radius: 6px;"
+                                style: "display: block; max-width: 90%; height: auto; border-radius: 6px;"
                             }
                         }
 
                         CardFooter {
-                            style: "flex-direction: column; gap: 0.5rem; margin-top: auto; padding-top: 10px;",
                             Button {
                                 variant: ButtonVariant::Secondary,
-                                style: "width: 100%; font-size: 0.85rem;",
+                                style: "width: 100%; margin: 0 auto;",
                                 "Install Skin ({(skin.file.size as f32 / 1_000_000.0).round()} MB)"
                             }
                         }
