@@ -167,7 +167,7 @@ pub async fn fetch_page(
         ("vehicle", vehicle),
     ];
 
-    // println!("{:?}", params);
+    let _ = dbg!("POST Params: {:?}", params);
 
     let res = client
         .post("https://live.warthunder.com/api/feed/get_regular/")
@@ -186,7 +186,7 @@ pub async fn fetch_page(
     let page: Page =
         serde_json::from_str(&body_text).map_err(|e| format!("Failed to parse JSON: {e}"))?;
 
-    // println!("{:?}", page);
+    let _ = dbg!("Page: {:?}", &page);
 
     Ok(page)
 }

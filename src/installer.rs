@@ -4,7 +4,11 @@ use std::path::Path;
 use zip::result::ZipError;
 use zip::ZipArchive;
 
-pub async fn install_skin(game_dir: &str, file_link: &str, filename: &str) -> Result<String, String> {
+pub async fn install_skin(
+    game_dir: &str,
+    file_link: &str,
+    filename: &str,
+) -> Result<String, String> {
     let resp = reqwest::get(file_link).await.map_err(|e| e.to_string())?;
     let content = resp.bytes().await.map_err(|e| e.to_string())?;
 
@@ -50,10 +54,10 @@ pub async fn install_skin(game_dir: &str, file_link: &str, filename: &str) -> Re
         let new_dir_path = format!("{}/{}", game_dir, folder_name);
 
         std::fs::create_dir_all(&new_dir_path).map_err(|e| e.to_string())?;
-        println!("No root folder in archive, creating one: {}", folder_name);
+        let _ = dbg!("No root folder in archive, creating one: {}", folder_name);
         new_dir_path
     } else {
-        println!("Clean archive, proceeding to extraction");
+        let _ = dbg!("Clean archive, proceeding to extraction");
         game_dir.to_string()
     };
 

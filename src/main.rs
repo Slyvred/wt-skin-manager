@@ -1,4 +1,5 @@
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+// #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+#![cfg_attr(feature = "bundle", windows_subsystem = "windows")]
 
 mod api;
 mod components;
@@ -36,7 +37,7 @@ fn main() {
         .with_min_inner_size(LogicalSize::new(800.0, 600.0))
         // .with_transparent(true)
         // .with_decorations(false)
-        .with_title("War Thunder Camouflage Manager");
+        .with_title("War Thunder Skin Manager");
 
     let config = dioxus::desktop::Config::new()
         .with_menu(None)
@@ -67,11 +68,7 @@ fn App() -> Element {
 }
 
 #[component]
-pub fn ConfigModal(
-    open: Signal<bool>,
-    confirmed: Signal<bool>,
-) -> Element {
-
+pub fn ConfigModal(open: Signal<bool>, confirmed: Signal<bool>) -> Element {
     let mut user_config = use_context::<Signal<Result<Config, String>>>();
     let mut game_dir = use_context::<Signal<String>>();
 
@@ -90,30 +87,28 @@ pub fn ConfigModal(
             AlertDialogActions {
                 Button {
                     variant: ButtonVariant::Primary,
-                    onclick: move |_| confirmed.set(true),
+                    onclick: move |_| {
+                        let game_dir = game_dir.read().clone();
+                        let path = Path::new(&game_dir);
+
+                        if path.exists() {
+                            let cfg = Config { version: "1.0.0".to_string(), game_dir: game_dir};
+                            let res = cfg.save();
+
+                            if res.is_err() {
+                                let _ = dbg!("{:?}", res);
+                            }
+
+                            user_config.set(Ok(cfg));
+                            confirmed.set(true);
+                            open.set(false);
+                        }
+                        else {
+                            confirmed.set(false);
+                        }
+                    },
                     "Save"
                 }
-            }
-        }
-        if confirmed() {
-            {
-                let game_dir = game_dir.read().clone();
-                let path = Path::new(&game_dir);
-                if path.exists() {
-                    open.set(false);
-                    let cfg = Config { version: "1.0.0".to_string(), game_dir: game_dir};
-                    let res = cfg.save();
-
-                    if res.is_err() {
-                        eprintln!("{:?}", res);
-                    }
-
-                    user_config.set(Ok(cfg));
-                }
-                else {
-                    confirmed.set(false);
-                }
-
             }
         }
     }
@@ -167,7 +162,7 @@ pub fn Store() -> Element {
         spawn(async move {
             match fetch_filters(client.read().clone()).await {
                 Ok(fetched_filters) => {
-                    // println!("{:?}", &fetched_filters);
+                    // let _ = dbg!("{:?}", &fetched_filters);
                     filters.set(fetched_filters);
                     error_message.set(String::new());
                 }

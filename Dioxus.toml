@@ -1,4 +1,10 @@
 [application]
+name = "wt-skin-manager"
+
+[bundle]
+identifier = "com.slyvred.wt-skin-manager"
+publisher = "Slyvred"
+icon = ["assets/Imil-Sea-Crab.ico"]
 
 [web.app]
 

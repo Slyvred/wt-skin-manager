@@ -20,6 +20,7 @@ default = ["desktop"]
 web = ["dioxus/web"]
 desktop = ["dioxus/desktop"]
 mobile = ["dioxus/mobile"]
+bundle = []
 
 [profile.release]
 lto = true
@@ -30,8 +31,12 @@ opt-level = "z"
 codegen-units = 1
 
 [target.x86_64-pc-windows-gnu]
-rustflags = [
-    "-C", "link-arg=/SUBSYSTEM:WINDOWS",
-    "-C", "link-arg=/ENTRY:mainCRTStartup",
-]
 linker = "x86_64-w64-mingw-w64-gcc"
+rustflags = [
+  "-C",
+  "link-arg=-Wl,--subsystem,windows"
+]
+# rustflags = [
+#     "-C", "link-arg=/SUBSYSTEM:WINDOWS",
+#     "-C", "link-arg=/ENTRY:mainCRTStartup",
+# ]
