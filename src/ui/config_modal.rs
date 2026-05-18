@@ -66,7 +66,7 @@ pub fn ConfigModal(open: Signal<bool>, confirmed: Signal<bool>) -> Element {
                             Ok(cfg) => {
                                 user_config.set(Ok(cfg));
                                 config_toast.success(
-                                    "Error".to_string(),
+                                    "Success".to_string(),
                                     ToastOptions::new()
                                         .description("Saved path !".to_string())
                                         .duration(Duration::from_secs(3))
