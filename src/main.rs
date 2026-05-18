@@ -27,7 +27,7 @@ use crate::components::label::*;
 use crate::components::pagination::*;
 use crate::components::toast::*;
 
-const FAVICON: Asset = asset!("/assets/favicon.ico");
+const FAVICON: Asset = asset!("/assets/Imil-Sea-Crab.ico");
 const MAIN_CSS: Asset = asset!("/assets/main.css");
 const ASSETS_CSS: Asset = asset!("/assets/dx-components-theme.css");
 
@@ -62,8 +62,10 @@ fn App() -> Element {
         document::Link { rel: "icon", href: FAVICON }
         document::Link { rel: "stylesheet", href: MAIN_CSS }
         document::Link { rel: "stylesheet", href: ASSETS_CSS }
-        ConfigModal { open, confirmed }
-        Store { }
+        ToastProvider {
+            ConfigModal { open, confirmed }
+            Store { }
+        }
     }
 }
 
@@ -424,9 +426,7 @@ pub fn Store() -> Element {
         }
 
         if *page.read() != Page::default() {
-            ToastProvider {
-                ShowPage { page: page }
-            }
+            ShowPage { page: page }
         }
 
         Pagination {
