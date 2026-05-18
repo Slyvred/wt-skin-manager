@@ -44,14 +44,14 @@ fn main() {
 #[component]
 fn App() -> Element {
     let user_config = use_signal(|| Config::load_from_file("./config.json"));
-    let game_dir = use_signal(String::new);
+    // let game_dir = use_signal(String::new);
     let open = use_signal(|| user_config.read().is_err());
     let confirmed = use_signal(|| false);
 
     let _ = dbg!("FONTS PATH: {:?}", CASKAYDIA_MONO_NERD_FONT);
 
     provide_context(user_config);
-    provide_context(game_dir);
+    // provide_context(game_dir);
 
     rsx! {
         document::Link { rel: "icon", href: FAVICON }

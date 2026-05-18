@@ -8,10 +8,42 @@ use dioxus_primitives::toast::{use_toast, ToastOptions};
 use std::path::Path;
 use std::time::Duration;
 
+fn save_config(
+    mut open: Signal<bool>,
+    mut confirmed: Signal<bool>,
+    game_dir: Signal<String>,
+) -> Result<Config, String> {
+    let game_dir = game_dir.read().clone();
+    let path = Path::new(&game_dir);
+
+    if !path.exists() {
+        confirmed.set(false);
+        return Err("Please set a valid path".to_string());
+    }
+
+    let config = Config {
+        version: "1.0.0".to_string(),
+        game_dir: game_dir,
+    };
+    let res = config.save();
+
+    match res {
+        Ok(_) => {
+            confirmed.set(true);
+            open.set(false);
+            Ok(config)
+        }
+        Err(e) => {
+            let _ = dbg!("{:?}", &e);
+            Err(format!("Failed to save config: {}", e))
+        }
+    }
+}
+
 #[component]
 pub fn ConfigModal(open: Signal<bool>, confirmed: Signal<bool>) -> Element {
+    let mut game_dir = use_signal(String::new);
     let mut user_config = use_context::<Signal<Result<Config, String>>>();
-    let mut game_dir = use_context::<Signal<String>>();
     let config_toast = use_toast();
 
     rsx! {
@@ -30,49 +62,26 @@ pub fn ConfigModal(open: Signal<bool>, confirmed: Signal<bool>) -> Element {
                 Button {
                     variant: ButtonVariant::Primary,
                     onclick: move |_| {
-                        let game_dir = game_dir.read().clone();
-                        let path = Path::new(&game_dir);
-
-                        if path.exists() {
-                            let cfg = Config { version: "1.0.0".to_string(), game_dir: game_dir};
-                            let res = cfg.save();
-
-                            if res.is_err() {
-                                let _ = dbg!("{:?}", &res);
-
+                        match save_config(open, confirmed, game_dir) {
+                            Ok(cfg) => {
+                                user_config.set(Ok(cfg));
+                                config_toast.success(
+                                    "Error".to_string(),
+                                    ToastOptions::new()
+                                        .description("Saved path !".to_string())
+                                        .duration(Duration::from_secs(3))
+                                        .permanent(false),
+                                );
+                            }
+                            Err(e) => {
                                 config_toast.error(
                                     "Error".to_string(),
                                     ToastOptions::new()
-                                        .description(format!("Failed to save config: {}", res.unwrap_err()))
+                                        .description(e)
                                         .duration(Duration::from_secs(3))
-                                        .permanent(false)
+                                        .permanent(false),
                                 );
                             }
-
-                            user_config.set(Ok(cfg));
-
-                            config_toast.success(
-                                "Success".to_string(),
-                                ToastOptions::new()
-                                    .description("Saved path !".to_string())
-                                    .duration(Duration::from_secs(3))
-                                    .permanent(false)
-                            );
-
-                            confirmed.set(true);
-                            open.set(false);
-
-                        }
-                        else {
-                            confirmed.set(false);
-
-                            config_toast.error(
-                                "Error".to_string(),
-                                ToastOptions::new()
-                                    .description("Please set a valid path".to_string())
-                                    .duration(Duration::from_secs(3))
-                                    .permanent(false)
-                            );
                         }
                     },
                     "Save"
