@@ -43,7 +43,7 @@ fn main() {
 
 #[component]
 fn App() -> Element {
-    let user_config = use_signal(|| Config::load_from_file("./config.json"));
+    let user_config = use_signal(|| Config::load_from_file());
     // let game_dir = use_signal(String::new);
     let open = use_signal(|| user_config.read().is_err());
     let confirmed = use_signal(|| false);
