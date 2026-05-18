@@ -32,7 +32,8 @@ const MAIN_CSS: Asset = asset!("/assets/main.css");
 const ASSETS_CSS: Asset = asset!("/assets/dx-components-theme.css");
 
 // Contains our custom for the pretty glyphs :)
-const CASKAYDIA_MONO_NERD_FONT: Asset = asset!(
+#[used]
+static CASKAYDIA_MONO_NERD_FONT: Asset = asset!(
     "/assets/fonts/CaskaydiaMonoNerdFont-Regular.ttf",
     manganis::AssetOptions::builder().with_hash_suffix(false)
 );
@@ -61,6 +62,8 @@ fn App() -> Element {
     let open = use_signal(|| user_config.read().is_err());
     let confirmed = use_signal(|| false);
 
+    let _ = dbg!("FONTS PATH: {:?}", CASKAYDIA_MONO_NERD_FONT);
+
     provide_context(user_config);
     provide_context(game_dir);
 
@@ -68,7 +71,6 @@ fn App() -> Element {
         document::Link { rel: "icon", href: FAVICON }
         document::Link { rel: "stylesheet", href: MAIN_CSS }
         document::Link { rel: "stylesheet", href: ASSETS_CSS }
-        document::Link { rel: "font", href: CASKAYDIA_MONO_NERD_FONT }
 
         ToastProvider {
             ConfigModal { open, confirmed }
