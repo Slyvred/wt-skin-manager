@@ -5,7 +5,6 @@ name = "wt-skin-manager"
 identifier = "com.slyvred.wt-skin-manager"
 publisher = "Slyvred"
 icon = ["assets/Imil-Sea-Crab.ico"]
-resources = ["assets/fonts/CaskaydiaMonoNerdFont-Regular.ttf"]
 
 [web.app]
 

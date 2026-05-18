@@ -31,6 +31,12 @@ const FAVICON: Asset = asset!("/assets/Imil-Sea-Crab.ico");
 const MAIN_CSS: Asset = asset!("/assets/main.css");
 const ASSETS_CSS: Asset = asset!("/assets/dx-components-theme.css");
 
+// Contains our custom for the pretty glyphs :)
+const CASKAYDIA_MONO_NERD_FONT: Asset = asset!(
+    "/assets/fonts/CaskaydiaMonoNerdFont-Regular.ttf",
+    manganis::AssetOptions::builder().with_hash_suffix(false)
+);
+
 fn main() {
     let window = WindowBuilder::new()
         .with_inner_size(LogicalSize::new(1024.0, 768.0))
@@ -62,6 +68,8 @@ fn App() -> Element {
         document::Link { rel: "icon", href: FAVICON }
         document::Link { rel: "stylesheet", href: MAIN_CSS }
         document::Link { rel: "stylesheet", href: ASSETS_CSS }
+        document::Link { rel: "font", href: CASKAYDIA_MONO_NERD_FONT }
+
         ToastProvider {
             ConfigModal { open, confirmed }
             Store { }
