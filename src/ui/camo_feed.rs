@@ -323,7 +323,7 @@ pub fn CamoFeed() -> Element {
         Pagination {
             style: "position: fixed; bottom: 1.25rem; margin: 0 auto;",
             PaginationContent {
-                style: "background-color: #0f1116; border-radius: 10px; padding: 0.3rem;",
+                style: "background-color: #0a0a0a; border-radius: 10px; padding: 0.3rem;",
                 PaginationItem {
                     PaginationPrevious {
                         onclick: move |_| {
