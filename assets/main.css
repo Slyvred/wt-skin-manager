@@ -1,6 +1,8 @@
 :root {
     --foreground: #cdd6f4;
     --background: #181824;
+    --primary-color-1: var(--dark, #0e0e0e) var(--light, #fbfbfb);
+    --primary-color-2: var(--dark, #0a0a0a) var(--light, #fff);
 }
 
 @font-face {
@@ -11,7 +13,8 @@
 }
 
 body {
-    background-color: #0f1116;
+    /*background-color: #0f1116;*/
+    background-color: var(--primary-color-2);
     color: var(--foreground);
     font-family: "Caskaydia", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     margin: 20px;
