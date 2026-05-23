@@ -1,4 +1,4 @@
-use crate::backend::config::{Config, InstalledSkin};
+use crate::backend::config::Config;
 use crate::components::alert_dialog::*;
 use crate::components::button::*;
 use crate::components::input::*;
