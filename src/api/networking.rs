@@ -88,3 +88,31 @@ pub async fn fetch_page(
 
     Ok(page)
 }
+
+pub async fn fetch_skin(client: Client, lang_group: i32) -> Result<Skin, String> {
+    let lang_group_str = lang_group.to_string();
+    let params = [("lang_group", lang_group_str.as_str()), ("language", "en")];
+
+    let _ = dbg!("POST Params: {:?}", params);
+
+    let res = client
+        .post("https://live.warthunder.com/api/posts/get/")
+        .header(
+            "User-Agent",
+            "Mozilla/5.0 (X11; Linux x86_64; rv:150.0) Gecko/20100101 Firefox/150.0",
+        )
+        .header("Origin", "https://live.warthunder.com")
+        .form(&params)
+        .send()
+        .await
+        .map_err(|e| format!("Network error : {e}"))?;
+
+    let body_text = res.text().await.map_err(|e| e.to_string())?;
+
+    let skin: Skin =
+        serde_json::from_str(&body_text).map_err(|e| format!("Failed to parse JSON: {e}"))?;
+
+    let _ = dbg!("Page: {:?}", &skin);
+
+    Ok(skin)
+}

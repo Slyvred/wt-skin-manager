@@ -8,10 +8,12 @@ mod ui;
 use crate::components::toast::*;
 use crate::ui::camo_feed::*;
 use crate::ui::config_modal::*;
+use crate::ui::uninstall_page::UninstallPage;
 use backend::config::Config;
 use dioxus::desktop::LogicalSize;
 use dioxus::desktop::WindowBuilder;
 use dioxus::prelude::*;
+use reqwest::Client;
 
 const FAVICON: Asset = asset!("/assets/Imil-Sea-Crab.ico");
 const MAIN_CSS: Asset = asset!("/assets/main.css");
@@ -44,6 +46,8 @@ fn main() {
 #[component]
 fn App() -> Element {
     let mut user_config = use_signal(|| Config::default());
+    let client = use_signal(|| Client::new());
+
     let mut open = use_signal(|| false);
     let confirmed = use_signal(|| false);
 
@@ -60,6 +64,7 @@ fn App() -> Element {
     let _ = dbg!("FONTS PATH: {:?}", CASKAYDIA_MONO_NERD_FONT);
 
     provide_context(user_config);
+    provide_context(client);
     // provide_context(game_dir);
 
     rsx! {
@@ -69,7 +74,8 @@ fn App() -> Element {
 
         ToastProvider {
             ConfigModal { open, confirmed }
-            CamoFeed { }
+            // CamoFeed { }
+            UninstallPage { }
         }
     }
 }
