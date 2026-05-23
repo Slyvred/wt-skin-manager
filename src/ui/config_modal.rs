@@ -1,4 +1,4 @@
-use crate::backend::config::Config;
+use crate::backend::config::{Config, InstalledSkin};
 use crate::components::alert_dialog::*;
 use crate::components::button::*;
 use crate::components::input::*;
@@ -22,9 +22,11 @@ fn save_config(
     }
 
     let config = Config {
-        version: "1.0.0".to_string(),
+        version: "1.1.0".to_string(),
         game_dir: game_dir,
+        installed_skins: Vec::new(),
     };
+
     let res = config.save();
 
     match res {
@@ -43,7 +45,7 @@ fn save_config(
 #[component]
 pub fn ConfigModal(open: Signal<bool>, confirmed: Signal<bool>) -> Element {
     let mut game_dir = use_signal(String::new);
-    let mut user_config = use_context::<Signal<Result<Config, String>>>();
+    let mut user_config = use_context::<Signal<Config>>();
     let config_toast = use_toast();
 
     rsx! {
@@ -64,7 +66,7 @@ pub fn ConfigModal(open: Signal<bool>, confirmed: Signal<bool>) -> Element {
                     onclick: move |_| {
                         match save_config(open, confirmed, game_dir) {
                             Ok(cfg) => {
-                                user_config.set(Ok(cfg));
+                                user_config.set(cfg);
                                 config_toast.success(
                                     "Success".to_string(),
                                     ToastOptions::new()

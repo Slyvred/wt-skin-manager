@@ -43,10 +43,19 @@ fn main() {
 
 #[component]
 fn App() -> Element {
-    let user_config = use_signal(|| Config::load_from_file());
-    // let game_dir = use_signal(String::new);
-    let open = use_signal(|| user_config.read().is_err());
+    let mut user_config = use_signal(|| Config::default());
+    let mut open = use_signal(|| false);
     let confirmed = use_signal(|| false);
+
+    match Config::load_from_file() {
+        Ok(config) => {
+            user_config.set(config);
+        }
+        Err(e) => {
+            dbg!("{:?}", e);
+            open.set(true);
+        }
+    }
 
     let _ = dbg!("FONTS PATH: {:?}", CASKAYDIA_MONO_NERD_FONT);
 

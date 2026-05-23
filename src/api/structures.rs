@@ -23,6 +23,8 @@ pub struct File {
 #[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
 pub struct Skin {
     pub author: Author,
+    pub lang_group: i32,
+    pub id: i32,
     pub likes: i32,
     pub views: i32,
     pub downloads: i32,

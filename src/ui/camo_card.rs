@@ -12,7 +12,7 @@ use dioxus_primitives::toast::{use_toast, ToastOptions};
 pub fn CamoCard(skin_signal: ReadSignal<Skin>) -> Element {
     let skin = skin_signal.read();
 
-    let user_config = use_context::<Signal<Result<Config, String>>>();
+    let user_config = use_context::<Signal<Config>>();
 
     // Notification on skin installation
     let toast = use_toast();
@@ -51,9 +51,6 @@ pub fn CamoCard(skin_signal: ReadSignal<Skin>) -> Element {
                         variant: ButtonVariant::Secondary,
                         style: "width: 100%; margin: 0 auto;",
                         onclick: move |_| {
-                            let file_link = skin_signal.read().file.link.clone();
-                            let filename = skin_signal.read().file.name.clone();
-
                             toast.info(
                                 "Information".to_string(),
                                 ToastOptions::new()
@@ -62,16 +59,8 @@ pub fn CamoCard(skin_signal: ReadSignal<Skin>) -> Element {
                                     .permanent(false)
                             );
 
-                            let game_dir = match &*user_config.read() {
-                                Ok(config) => config.game_dir.clone(),
-                                Err(e) => {
-                                    toast.error("Config Error".to_string(), ToastOptions::new().description(e.to_string()));
-                                    return;
-                                }
-                            };
-
                             spawn(async move {
-                                match install_skin(&game_dir, &file_link, &filename).await {
+                                match install_skin(skin_signal, user_config).await {
                                     Ok(msg) => {
                                         toast.success(
                                             "Success".to_string(),

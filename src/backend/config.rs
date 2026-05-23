@@ -1,12 +1,19 @@
 use directories::ProjectDirs;
 use serde::{Deserialize, Serialize};
 use std;
-use std::path::{Path, PathBuf};
-// use tokio::fs;
+use std::path::PathBuf;
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
+pub struct InstalledSkin {
+    pub lang_group: i32,
+    pub path: PathBuf,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
 pub struct Config {
     pub version: String,
     pub game_dir: String,
+    pub installed_skins: Vec<InstalledSkin>,
 }
 
 impl Config {
@@ -24,6 +31,10 @@ impl Config {
 
         let config: Config =
             serde_json::from_str(&content).map_err(|e| format!("JSON error: {e}"))?;
+
+        if config.version != "1.1.0".to_string() {
+            return Err("Config is too old !".into());
+        }
 
         Ok(config)
     }
