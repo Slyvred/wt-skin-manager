@@ -2,7 +2,7 @@ use crate::api::networking::fetch_skin;
 use crate::api::structures::Skin;
 use crate::backend::config::Config;
 use crate::components::button::*;
-use crate::ui::camo_card::CamoCard;
+use crate::ui::camo_card_uninstall::CamoCardUninstall;
 use dioxus::prelude::*;
 use reqwest::Client;
 
@@ -34,7 +34,7 @@ pub fn UninstallPage() -> Element {
             id: "camo-page",
 
             for index in 0..installed_skins.read().len() {
-                CamoCard {
+                CamoCardUninstall {
                     skin_signal: installed_skins.map(move |p| &p[index])
                 }
             }

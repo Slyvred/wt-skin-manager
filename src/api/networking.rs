@@ -112,7 +112,7 @@ pub async fn fetch_skin(client: Client, lang_group: i32) -> Result<Skin, String>
     let skin: Skin =
         serde_json::from_str(&body_text).map_err(|e| format!("Failed to parse JSON: {e}"))?;
 
-    let _ = dbg!("Page: {:?}", &skin);
+    let _ = dbg!("Skin: {:?}", &skin);
 
     Ok(skin)
 }

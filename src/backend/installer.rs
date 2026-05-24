@@ -1,5 +1,6 @@
 use crate::api::structures::Skin;
 use crate::backend::config::{Config, InstalledSkin};
+use dioxus::html::button::form;
 use dioxus::prelude::*;
 use std::fs::File;
 use std::io;
@@ -12,12 +13,12 @@ async fn download_archive(url: &str, download_path: &str) -> Result<ZipArchive<F
     let content = resp.bytes().await.map_err(|e| e.to_string())?;
     let path = Path::new(&download_path);
 
-    let mut out = File::create(path).map_err(|e| e.to_string())?;
+    let mut out = File::create(&path).map_err(|e| e.to_string())?;
 
     let mut content_cursor = std::io::Cursor::new(content);
     io::copy(&mut content_cursor, &mut out).map_err(|e| e.to_string())?;
 
-    let archive = File::open(path)
+    let archive = File::open(&path)
         .map_err(ZipError::from)
         .and_then(ZipArchive::new)
         .map_err(|e| e.to_string())?;
@@ -75,6 +76,17 @@ async fn extract_skin(
     .await
     .map_err(|_| "Thread pool error".to_string())?;
 
+    // If the archive is well formatted we extract it directly in UserSkins
+    // But returning this will not return the path of the skin's folder
+    if final_extract_path.ends_with("UserSkins") {
+        let skin_dir = format!(
+            "{}/{}",
+            final_extract_path,
+            filename.trim_end_matches(".zip")
+        );
+        return Ok(PathBuf::from(skin_dir));
+    }
+
     Ok(PathBuf::from(final_extract_path))
 }
 
@@ -84,8 +96,8 @@ pub async fn install_skin(
 ) -> Result<String, String> {
     let skin = skin_signal.read();
     let mut config = config_signal.read().clone();
-
-    let archive = download_archive(&skin.file.link, &config.game_dir).await?;
+    let archive_path = format!("{}/{}", &config.game_dir, &skin.file.name);
+    let archive = download_archive(&skin.file.link, &archive_path).await?;
     let skin_path = extract_skin(archive, &skin.file.name, &config.game_dir).await?;
 
     let skin = InstalledSkin {
@@ -98,7 +110,7 @@ pub async fn install_skin(
     let _ = config.save();
     config_signal.set(config);
 
-    match std::fs::remove_file(&skin_path) {
+    match std::fs::remove_file(&archive_path) {
         Ok(_) => Ok("Skin installed successfully".to_string()),
         Err(e) => Ok(format!(
             "Skin installed successfully but unable to delete original archive, you may have to do it yourself: {}",

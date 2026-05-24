@@ -9,8 +9,14 @@ pub struct Author {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
-pub struct Images {
+pub struct StandaloneSkinImage {
     pub src: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
+pub struct Image {
+    pub src: Option<String>,               // If we parse the skin from a page
+    pub orig: Option<StandaloneSkinImage>, // If we parse the skin from a post
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
@@ -29,16 +35,20 @@ pub struct Skin {
     pub views: i32,
     pub downloads: i32,
     pub comments: i32,
-    pub images: Vec<Images>,
+    pub images: Vec<Image>,
     pub file: File,
 }
 
 impl Skin {
     pub fn get_thumbnail(&self) -> &str {
-        match self.images.get(0) {
-            Some(img) => &img.src,
-            None => "https://media1.tenor.com/m/tlu3haOgKwsAAAAC/horse-wine.gif", // Fallback
+        if let Some(img) = self.images.first() {
+            if let Some(src) = img.src.as_deref() {
+                return src;
+            } else if let Some(orig_img) = img.orig.as_ref() {
+                return &orig_img.src;
+            }
         }
+        "https://media1.tenor.com/m/tlu3haOgKwsAAAAC/horse-wine.gif" // Fallback
     }
 }
 
