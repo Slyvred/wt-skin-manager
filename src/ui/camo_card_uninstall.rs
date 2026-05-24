@@ -23,33 +23,33 @@ pub fn CamoCardUninstall(skin_signal: ReadSignal<Skin>) -> Element {
             style: "display: inline-block; width: 100%; break-inside: avoid; margin-bottom: 1.5rem;",
 
             Card {
-                style: "width: 100%; display: flex; flex-direction: column; overflow: hidden;",
+                class: "w-full flex flex-col overflow-hidden",
 
                 CardHeader {
                     CardTitle { "Author: {skin.author.nickname}" }
                     CardDescription {
-                        div { style: "display: flex; flex-direction: row; align-items: center; gap: 0.8rem; font-size: 0.85rem;",
-                            div { style: "display: flex; align-items: center; gap: 0.2rem;", " {skin.likes}" }
-                            div { style: "display: flex; align-items: center; gap: 0.2rem;", " {skin.views}" }
-                            div { style: "display: flex; align-items: center; gap: 0.2rem;", " {skin.downloads}" }
-                            div { style: "display: flex; align-items: center; gap: 0.2rem;", " {skin.comments}" }
+                        div { class: "flex flex-row items-center gap-3 text-xs sm:text-sm",
+                            div { class: "flex items-center gap-1", " {skin.likes}" }
+                            div { class: "flex items-center gap-1", " {skin.views}" }
+                            div { class: "flex items-center gap-1", " {skin.downloads}" }
+                            div { class: "flex items-center gap-1", " {skin.comments}" }
                         }
                     }
                 }
 
                 CardContent {
-                    style: "padding: 10px; display: flex; justify-content: center; align-items: center;",
+                    class: "p-2.5 flex justify-center items-center",
 
                     img {
                         src: "{skin.get_thumbnail()}",
-                        style: "display: block; max-width: 90%; height: auto; border-radius: 6px;"
+                        class: "block max-w-[90%] h-auto rounded-md"
                     }
                 }
 
                 CardFooter {
                     Button {
                         variant: ButtonVariant::Destructive,
-                        style: "width: 100%; margin: 0 auto;",
+                        class: "w-full mx-auto",
                         onclick: move |_| {
                             spawn(async move {
                                 match uninstall_skin(skin_signal, user_config).await {

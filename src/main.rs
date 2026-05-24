@@ -5,7 +5,6 @@ mod backend;
 mod components;
 mod ui;
 
-use crate::components::separator::*;
 use crate::components::sidebar::*;
 use crate::components::toast::*;
 use crate::ui::camo_feed::*;
@@ -32,8 +31,6 @@ fn main() {
     let window = WindowBuilder::new()
         .with_inner_size(LogicalSize::new(1024.0, 768.0))
         .with_min_inner_size(LogicalSize::new(800.0, 600.0))
-        // .with_transparent(true)
-        // .with_decorations(false)
         .with_title("War Thunder Skin Manager");
 
     let config = dioxus::desktop::Config::new()
@@ -70,12 +67,12 @@ fn App() -> Element {
 
     provide_context(user_config);
     provide_context(client);
-    // provide_context(game_dir);
 
     rsx! {
         document::Link { rel: "icon", href: FAVICON }
         document::Link { rel: "stylesheet", href: MAIN_CSS }
         document::Link { rel: "stylesheet", href: ASSETS_CSS }
+        document::Stylesheet { href: asset!("/assets/tailwind.css") }
 
         ToastProvider {
             SidebarProvider {
@@ -101,7 +98,7 @@ fn App() -> Element {
                                                     show_feed.set(true);
                                                     show_uninstall.set(false);
                                                 },
-                                                "Install Skins"
+                                                " Install Skins"
                                             }
                                         }
                                     }
@@ -114,7 +111,7 @@ fn App() -> Element {
                                                     show_uninstall.set(true);
                                                     show_feed.set(false);
                                                 },
-                                                "Uninstall Skins"
+                                                " Uninstall Skins"
                                             }
                                         }
                                     }

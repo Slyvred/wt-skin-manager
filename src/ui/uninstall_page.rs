@@ -35,7 +35,7 @@ pub fn UninstallPage() -> Element {
 
     rsx! {
         div {
-            style: "columns: 3 280px; gap: 1.5rem; padding: 25px; width: 100%; max-width: 98vw; margin: 3rem -1.5rem;",
+            class: "columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-6 p-6 w-full max-w-[98vw] my-12 -mx-6",
 
             if let Some(installed_skins) = skins {
                 for index in 0..installed_skins.len() {
@@ -50,12 +50,12 @@ pub fn UninstallPage() -> Element {
             }
 
             Button {
-                style: "z-index: 1; position: fixed; bottom: 1.25rem; right: 1.25rem;",
+                class: "z-10 fixed bottom-5 right-5",
                 variant: ButtonVariant::Outline,
                 onclick: move |_| {
                     document::eval(
                         r#"
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        document.getElementById("inset").scrollTo({ top: 0, behavior: 'smooth' });
                         "#,
                     );
                 },
