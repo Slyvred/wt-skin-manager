@@ -20,9 +20,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Rust Toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-
       - name: Install Linux Dependencies
         if: matrix.os == 'ubuntu-latest'
         run: |
@@ -43,15 +40,12 @@ jobs:
         run: |
           if ! command -v dx &> /dev/null; then
             curl -sSL https://dioxus.dev/install.sh | bash
-            echo "$HOME/.cargo/bin" >> $GITHUB_PATH
           fi
 
       - name: Bundle for Linux
         shell: bash
         if: matrix.os == 'ubuntu-latest'
         run: |
-          cargo metadata
-
           dx bundle --linux \
           --package-types "appimage" \
           --package-types "deb" \
@@ -66,8 +60,6 @@ jobs:
         shell: bash
         if: matrix.os == 'macos-latest'
         run: |
-          cargo metadata
-
           dx bundle --macos \
           --package-types "macos" \
           --package-types "dmg" \
@@ -81,8 +73,6 @@ jobs:
         shell: bash
         if: matrix.os == 'windows-latest'
         run: |
-          cargo metadata
-
           dx bundle --windows \
           --package-types "msi" \
           --release \
