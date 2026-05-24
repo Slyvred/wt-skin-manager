@@ -1,5 +1,4 @@
 use crate::api::networking::fetch_skin;
-use crate::api::structures::Skin;
 use crate::backend::config::Config;
 use crate::components::button::*;
 use crate::ui::camo_card_uninstall::CamoCardUninstall;
@@ -11,22 +10,24 @@ pub fn UninstallPage() -> Element {
     let user_config = use_context::<Signal<Config>>();
     let client = use_context::<Signal<Client>>();
 
-    let installed_skins_resource = use_resource(move || async move {
-        let mut fetched_skins = Vec::new();
+    let installed_skins_resource = use_resource(move || {
+        let current_skins = user_config.read().installed_skins.clone(); // Will trigger a refresh if it changes
+        let client_raw = client.read().clone();
 
-        let current_skins = user_config.read().installed_skins.clone();
-
-        for skin in current_skins {
-            match fetch_skin(client.read().clone(), skin.lang_group).await {
-                Ok(skin_data) => {
-                    fetched_skins.push(skin_data);
-                }
-                Err(e) => {
-                    dbg!("Error fetching installed skin: {}", e);
+        async move {
+            let mut fetched_skins = Vec::new();
+            for skin in current_skins {
+                match fetch_skin(client_raw.clone(), skin.lang_group).await {
+                    Ok(skin_data) => {
+                        fetched_skins.push(skin_data);
+                    }
+                    Err(e) => {
+                        dbg!("Error fetching installed skin: {}", e);
+                    }
                 }
             }
+            fetched_skins
         }
-        fetched_skins
     });
 
     let skins_guard = installed_skins_resource.value();
@@ -39,7 +40,11 @@ pub fn UninstallPage() -> Element {
             if let Some(installed_skins) = skins {
                 for index in 0..installed_skins.len() {
                     CamoCardUninstall {
-                        skin_signal: installed_skins_resource.map(move |v| &v.as_ref().unwrap()[index])
+                        skin_signal: installed_skins_resource.map(move |v| {
+                            v.as_ref()
+                             .and_then(|list| list.get(index))
+                             .expect("Skin index matching failed")
+                        })
                     }
                 }
             }
