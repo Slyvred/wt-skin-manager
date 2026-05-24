@@ -90,11 +90,7 @@ async fn extract_skin(
     Ok(PathBuf::from(final_extract_path))
 }
 
-pub async fn install_skin(
-    skin_signal: ReadSignal<Skin>,
-    mut config_signal: Signal<Config>,
-) -> Result<String, String> {
-    let skin = skin_signal.read();
+pub async fn install_skin(skin: Skin, mut config_signal: Signal<Config>) -> Result<String, String> {
     let game_dir = config_signal.read().game_dir.clone();
     let archive_path = format!("{}/{}", &game_dir, &skin.file.name);
     let archive = download_archive(&skin.file.link, &archive_path).await?;

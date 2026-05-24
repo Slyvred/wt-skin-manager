@@ -59,8 +59,10 @@ pub fn CamoCard(skin_signal: ReadSignal<Skin>) -> Element {
                                     .permanent(false)
                             );
 
+                            let skin_copy = skin_signal.read().clone();
+
                             spawn(async move {
-                                match install_skin(skin_signal, user_config).await {
+                                match install_skin(skin_copy, user_config).await {
                                     Ok(msg) => {
                                         toast.success(
                                             "Success".to_string(),

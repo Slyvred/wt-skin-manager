@@ -9,7 +9,7 @@ use reqwest::Client;
 
 #[component]
 pub fn CamoFeed() -> Element {
-    let client = use_signal(|| Client::new());
+    let client = use_context::<Signal<Client>>();
 
     let mut vehicle_country_query = use_signal(String::new);
     let mut vehicle_country_value = use_signal(|| None::<String>);
@@ -30,13 +30,38 @@ pub fn CamoFeed() -> Element {
     let mut active_page = use_signal(|| 0);
 
     let search_action = move |target_page: i32| {
+        let client_clone = client.read().clone();
+        let country = vehicle_country_value
+            .read()
+            .as_deref()
+            .unwrap_or_default()
+            .to_string();
+
+        let v_type = vehicle_type_value
+            .read()
+            .as_deref()
+            .unwrap_or_default()
+            .to_string();
+
+        let class = vehicle_class_value
+            .read()
+            .as_deref()
+            .unwrap_or_default()
+            .to_string();
+
+        let vehicle = vehicle_value
+            .read()
+            .as_deref()
+            .unwrap_or_default()
+            .to_string();
+
         spawn(async move {
             match fetch_page(
-                client.read().clone(),
-                vehicle_country_value.read().as_deref().unwrap_or_default(),
-                vehicle_type_value.read().as_deref().unwrap_or_default(),
-                vehicle_class_value.read().as_deref().unwrap_or_default(),
-                vehicle_value.read().as_deref().unwrap_or_default(),
+                client_clone,
+                &country,
+                &v_type,
+                &class,
+                &vehicle,
                 target_page,
             )
             .await
