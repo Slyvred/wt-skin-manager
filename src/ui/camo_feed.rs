@@ -310,10 +310,10 @@ pub fn CamoFeed() -> Element {
                 },
                 "Search",
             }
-        }
 
-        if !error_message.read().is_empty() {
-            p { style: "color: red;", "{error_message}" }
+            if !error_message.read().is_empty() {
+                p { style: "color: red;", "{error_message}" }
+            }
         }
 
         if *page.read() != Page::default() {

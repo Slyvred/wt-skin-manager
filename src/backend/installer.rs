@@ -95,20 +95,21 @@ pub async fn install_skin(
     mut config_signal: Signal<Config>,
 ) -> Result<String, String> {
     let skin = skin_signal.read();
-    let mut config = config_signal.read().clone();
-    let archive_path = format!("{}/{}", &config.game_dir, &skin.file.name);
+    let game_dir = config_signal.read().game_dir.clone();
+    let archive_path = format!("{}/{}", &game_dir, &skin.file.name);
     let archive = download_archive(&skin.file.link, &archive_path).await?;
-    let skin_path = extract_skin(archive, &skin.file.name, &config.game_dir).await?;
+    let skin_path = extract_skin(archive, &skin.file.name, &game_dir).await?;
 
     let skin = InstalledSkin {
         lang_group: skin.lang_group,
         path: skin_path.clone(),
     };
 
-    // config = config_signal.read().clone();
-    config.installed_skins.push(skin);
-    let _ = config.save();
-    config_signal.set(config);
+    {
+        let mut config = config_signal.write();
+        config.installed_skins.push(skin);
+        let _ = config.save();
+    }
 
     match std::fs::remove_file(&archive_path) {
         Ok(_) => Ok("Skin installed successfully".to_string()),

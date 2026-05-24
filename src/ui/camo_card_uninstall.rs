@@ -74,7 +74,7 @@ pub fn CamoCardUninstall(skin_signal: ReadSignal<Skin>) -> Element {
                                 }
                             });
                         },
-                        "Uninstall Skin ({(skin.file.size as f32 / 1_000_000.0).round()} MB)"
+                        "Uninstall Skin"
                     }
                 }
             }

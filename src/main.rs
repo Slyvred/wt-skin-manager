@@ -5,6 +5,8 @@ mod backend;
 mod components;
 mod ui;
 
+use crate::components::separator::*;
+use crate::components::sidebar::*;
 use crate::components::toast::*;
 use crate::ui::camo_feed::*;
 use crate::ui::config_modal::*;
@@ -51,6 +53,9 @@ fn App() -> Element {
     let mut open = use_signal(|| false);
     let confirmed = use_signal(|| false);
 
+    let mut show_feed = use_signal(|| true);
+    let mut show_uninstall = use_signal(|| false);
+
     match Config::load_from_file() {
         Ok(config) => {
             user_config.set(config);
@@ -73,9 +78,76 @@ fn App() -> Element {
         document::Link { rel: "stylesheet", href: ASSETS_CSS }
 
         ToastProvider {
-            ConfigModal { open, confirmed }
-            CamoFeed { }
-            // UninstallPage { }
+            SidebarProvider {
+                Sidebar {
+                    side: SidebarSide::Left,
+                    variant: SidebarVariant::Sidebar,
+                    collapsible: SidebarCollapsible::Offcanvas,
+
+                    SidebarHeader {
+                        SidebarTrigger {}
+                    }
+
+                    SidebarContent {
+                        SidebarGroup {
+                            SidebarGroupContent {
+                                SidebarMenu {
+                                    SidebarMenuItem {
+                                        SidebarMenuButton {
+                                            is_active: *show_feed.read(),
+                                            div {
+                                                style: "display: block; width: 100%;",
+                                                onclick: move |_| {
+                                                    show_feed.set(true);
+                                                    show_uninstall.set(false);
+                                                },
+                                                "Install Skins"
+                                            }
+                                        }
+                                    }
+                                    SidebarMenuItem {
+                                        SidebarMenuButton {
+                                            is_active: *show_uninstall.read(),
+                                            div {
+                                                style: "display: block; width: 100%;",
+                                                onclick: move |_| {
+                                                    show_uninstall.set(true);
+                                                    show_feed.set(false);
+                                                },
+                                                "Uninstall Skins"
+                                            }
+                                        }
+                                    }
+                                    // SidebarMenuItem {
+                                    //     SidebarMenuButton {
+                                    //         is_active: false,
+                                    //         span { "Settings" }
+                                    //     }
+                                    // }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                SidebarRail {}
+
+                SidebarInset {
+                    style: "display: flex; flex-direction: column; flex: 1; height: 100vh; overflow-y: auto;",
+                    id: "inset",
+                    {
+                        if *show_feed.read() {
+                            rsx! { CamoFeed {} }
+                        } else if *show_uninstall.read() {
+                            rsx! { UninstallPage {} }
+                        }
+                        else {
+                            rsx! { span { "Select a tab to continue" } }
+                        }
+                    }
+                    ConfigModal { open, confirmed }
+                }
+            }
         }
     }
 }

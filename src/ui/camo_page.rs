@@ -22,7 +22,7 @@ pub fn CamoPage(page: Signal<Page>) -> Element {
                 onclick: move |_| {
                     document::eval(
                         r#"
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        document.getElementById("inset").scrollTo({ top: 0, behavior: 'smooth' });
                         "#,
                     );
                 },

@@ -7,7 +7,7 @@ pub async fn uninstall_skin(
     mut config_signal: Signal<Config>,
 ) -> Result<String, String> {
     let skin = skin_signal.read();
-    let mut config = config_signal.read().clone();
+    let mut config = config_signal.write();
 
     let (idx, skin_to_remove) = config
         .installed_skins
@@ -20,11 +20,9 @@ pub async fn uninstall_skin(
 
     let delete_res = std::fs::remove_dir_all(&skin_to_remove.path);
 
-    // config = config_signal.read().clone();
     config.installed_skins.remove(idx);
 
     let _ = config.save();
-    config_signal.set(config);
 
     match delete_res {
         Ok(_) => Ok("Skin uninstalled successfully".to_string()),
