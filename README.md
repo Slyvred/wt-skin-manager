@@ -1,49 +1,63 @@
 # War Thunder Skin Manager
 
-This application is intented to be used as a helper to manage your War Thunder Skins. It works by using the api of [https://live.warthunder.com/](https://live.warthunder.com/). This allows you to install skins as if you were browsing on the website.
+War Thunder Skin Manager is a desktop utility designed to simplify the management of custom camouflages for War Thunder. By leveraging the [War Thunder Live API](https://live.warthunder.com/), you can browse, install, and uninstall skins directly from the application without any manual file manipulation.
 
-When you click on "install" the application will automatically download and extract the archive to your game's skins folder. If the downloaded archive contains several or no folders, one will be created by the manager to avoid cluttering the skins folder.
+When you click "Install", the application automatically downloads the archive and extracts it into your game's UserSkins folder. If an archive contains multiple subfolders or loose files, the manager automatically creates a dedicated root folder to prevent cluttering your game directory.
 
-## Usage
+## Features & Usage
 
-1. Set your game's skins directory
+### 1. Configuration
+
+Set your War Thunder installation directory to allow the manager to locate your `UserSkins` folder.
 ![config](images/config.png)
 
-2. Refine your search with filters
+
+### 2. Search and Filter
+
+Refine your research using the built-in filters to find the exact camouflage you are looking for.
 ![filters](images/filters.png)
 
-3. Install the skins you want
-![filters](images/install-panel.png)
+### 3. One-Click Installation
 
-4. Uninstall unwanted skins 
-![filters](images/uninstall-panel.png)
-_Note: For the moment this feature will only work for skins installed through the manager_
+Install the skins you want instantly. The application handles downloading, unzipping, and folder structuring.
+![install](images/install-panel.png)
 
-## Technical Aspects
+### 4. Skin Uninstallation
 
-I wrote this software using Rust entierly. 
+Easily remove unwanted camouflages to free up disk space.
+![install](images/uninstall-panel.png)
 
-The crates used are:
+> **Note:** Currently, the uninstallation feature only tracks and removes skins that were installed through this manager.
 
-- Dioxus for the interface
-- Tokio for async
-- Serde_Json for, you guessed it, the json
-- Reqwest to do http requests to the api and download files
-- Directories to save the config in the correct directory for each platform
-- Zip to extract the archives
+## Technical Stack
 
-The application makes heavy used of async and threads to keep the ui responsive during downloads and process them in parrallel.
+This application is written entirely in **Rust**. It utilizes asynchronous programming and multi-threading to ensure the user interface remains smooth and responsive during parallel downloads.
+
+The core libraries used in this project include:
+
+- **Dioxus**: For building the user interface.
+- **Tokio**: As the async runtime.
+- **Reqwest**: To handle HTTP requests to the API and manage file downloads.
+- **Zip**: To extract downloaded camouflage archives.
+- **Serde_json**: For parsing API responses and local configuration serialization.
+- **Directories**: To ensure the configuration files are saved in the standard OS-specific directories.
 
 ## Disclaimer
 
-I made this project in two weeks after more than a year without touching Rust. My Rust skills were already bad so I struggled to keep the codebase clean and readable. So don't be surprised if the application crashes, or if any dataloss occurs. I am not responsible for either of them ! This software is provided "as is".
+This project was developed over a two-week period after more than a year of hiatus from Rust programming. As a result, the codebase may contain suboptimal patterns or architecture.
 
-## Roadmap
+This software is provided **"as is"**, without warranty of any kind. While it has been designed to manage skins safely, I'm not responsible for any application crashes, bugs, or potential data loss. Use it at your own risk.
 
-Todo:
-- [ ] Clean up the code !!!
-- [ ] Separate the logic from the UI
-- [ ] Add a settings page
-- [ ] Add a search bar
+## Todo
+
+- [ ] Refactor and clean up the codebase !!!!
+- [ ] Separate "backend" logic from the UI components.
+- [ ] Implement a dedicated Settings page.
+- [ ] Support uninstallation of skins not installed through the manager
+- [ ] Add a search bar like on the website
+
+---
 
 ## License
+
+This project is licensed under the **GNU General Public License v3.0**. See the LICENSE file for more details.
