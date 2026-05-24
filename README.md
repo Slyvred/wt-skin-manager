@@ -42,6 +42,24 @@ The core libraries used in this project include:
 - **Serde_json**: For parsing API responses and local configuration serialization.
 - **Directories**: To ensure the configuration files are saved in the standard OS-specific directories.
 
+## Installation
+
+You can either download the release for your system in the releases tab or compile it yourself.
+To do so you will need to:
+
+- Have rust installed [link](https://rust-lang.org/tools/install/)
+- Have Dioxus CLI installed [guide](https://dioxuslabs.com/learn/0.7/getting_started/#install-the-dioxus-cli)
+  - Make sure to install any platform-specific dependencies
+
+Finally, clone the repository and create a bundle with the Dioxus CLI:
+
+```bash
+# Example for windows
+dx bundle --windows --package-types msi --release
+```
+
+For other platforms refer to the official [Dioxus bundling doc](https://dioxuslabs.com/learn/0.7/tutorial/bundle#bundling-for-desktop-and-mobile). Running `dx bundle --help` may also be useful.
+
 ## Disclaimer
 
 This project was developed over a two-week period after more than a year of hiatus from Rust programming. As a result, the codebase may contain suboptimal patterns or architecture.
