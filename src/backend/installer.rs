@@ -1,6 +1,5 @@
 use crate::api::structures::Skin;
 use crate::backend::config::{Config, InstalledSkin};
-use dioxus::html::button::form;
 use dioxus::prelude::*;
 use std::fs::File;
 use std::io;
@@ -76,18 +75,17 @@ async fn extract_skin(
     .await
     .map_err(|_| "Thread pool error".to_string())?;
 
-    // If the archive is well formatted we extract it directly in UserSkins
-    // But returning this will not return the path of the skin's folder
-    if final_extract_path.ends_with("UserSkins") {
-        let skin_dir = format!(
-            "{}/{}",
-            final_extract_path,
-            filename.trim_end_matches(".zip")
-        );
-        return Ok(PathBuf::from(skin_dir));
+    // If the archive doesn't have a root folder we extract it in the folder we created above
+    if needs_new_folder {
+        Ok(PathBuf::from(final_extract_path))
     }
-
-    Ok(PathBuf::from(final_extract_path))
+    // But if it's well formatted the extracted folder will be the root folder of the archive.
+    // So we need to return that instead
+    else {
+        let zip_root = root_folder.unwrap_or_default();
+        let skin_dir = PathBuf::from(game_dir).join(zip_root);
+        Ok(skin_dir)
+    }
 }
 
 pub async fn install_skin(skin: Skin, mut config_signal: Signal<Config>) -> Result<String, String> {
