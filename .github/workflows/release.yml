@@ -52,7 +52,7 @@ jobs:
         run: |
           cargo metadata
 
-          dx bundle --desktop \
+          dx bundle --linux \
           --package-types "appimage" \
           --package-types "deb" \
           --package-types "rpm" \
@@ -68,7 +68,7 @@ jobs:
         run: |
           cargo metadata
 
-          dx bundle --desktop \
+          dx bundle --macos \
           --package-types "macos" \
           --package-types "dmg" \
           --release \
@@ -83,7 +83,7 @@ jobs:
         run: |
           cargo metadata
 
-          dx bundle --desktop \
+          dx bundle --windows \
           --package-types "msi" \
           --release \
           --json-output \
