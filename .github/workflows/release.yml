@@ -50,6 +50,8 @@ jobs:
         shell: bash
         if: matrix.os == 'ubuntu-latest'
         run: |
+          cargo metadata
+
           dx bundle --desktop \
           --package-types "appimage" \
           --package-types "deb" \
@@ -64,6 +66,8 @@ jobs:
         shell: bash
         if: matrix.os == 'macos-latest'
         run: |
+          cargo metadata
+
           dx bundle --desktop \
           --package-types "macos" \
           --package-types "dmg" \
@@ -77,6 +81,8 @@ jobs:
         shell: bash
         if: matrix.os == 'windows-latest'
         run: |
+          cargo metadata
+
           dx bundle --desktop \
           --package-types "msi" \
           --release \
