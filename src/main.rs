@@ -74,8 +74,8 @@ fn App() -> Element {
 
         ToastProvider {
             ConfigModal { open, confirmed }
-            // CamoFeed { }
-            UninstallPage { }
+            CamoFeed { }
+            // UninstallPage { }
         }
     }
 }
