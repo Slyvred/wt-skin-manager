@@ -58,6 +58,20 @@ Finally, clone the repository and create a bundle with the Dioxus CLI:
 dx bundle --windows --package-types msi --release
 ```
 
+### Arch-based distros 
+
+You'll see that the AppImage will crash on startup du to a `WebKitNetworkProcess` error. To fix the problem the simplest fix is to run the app with: 
+
+```bash
+LD_LIBRARY_PATH=/usr/lib ./wt-skin-manager_*.AppImage
+```
+
+Or you can compile it yourself using the guide above and the following command:
+```bash
+dx bundle --linux --package-types appimage --release
+```
+
+
 For other platforms refer to the official [Dioxus bundling doc](https://dioxuslabs.com/learn/0.7/tutorial/bundle#bundling-for-desktop-and-mobile). Running `dx bundle --help` may also be useful.
 
 ## Disclaimer

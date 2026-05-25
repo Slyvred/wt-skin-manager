@@ -80,7 +80,7 @@ pub fn CamoFeed() -> Element {
         spawn(async move {
             match fetch_filters(client.read().clone()).await {
                 Ok(fetched_filters) => {
-                    // let _ = dbg!("{:?}", &fetched_filters);
+                    // let _ = tracing::debug!("{:?}", &fetched_filters);
                     filters.set(fetched_filters);
                     error_message.set(String::new());
                 }

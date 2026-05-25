@@ -1,4 +1,5 @@
 use crate::api::structures::*;
+use dioxus::logger::tracing;
 use regex::Regex;
 use reqwest::Client;
 
@@ -65,7 +66,7 @@ pub async fn fetch_page(
         ("vehicle", vehicle),
     ];
 
-    let _ = dbg!("POST Params: {:?}", params);
+    tracing::debug!("POST Params: {:?}", params);
 
     let res = client
         .post("https://live.warthunder.com/api/feed/get_regular/")
@@ -84,7 +85,7 @@ pub async fn fetch_page(
     let page: Page =
         serde_json::from_str(&body_text).map_err(|e| format!("Failed to parse JSON: {e}"))?;
 
-    let _ = dbg!("Page: {:?}", &page);
+    tracing::debug!("Page: {:?}", &page);
 
     Ok(page)
 }
@@ -93,7 +94,7 @@ pub async fn fetch_skin(client: Client, lang_group: i32) -> Result<Skin, String>
     let lang_group_str = lang_group.to_string();
     let params = [("lang_group", lang_group_str.as_str()), ("language", "en")];
 
-    let _ = dbg!("POST Params: {:?}", params);
+    tracing::debug!("POST Params: {:?}", params);
 
     let res = client
         .post("https://live.warthunder.com/api/posts/get/")
@@ -112,7 +113,7 @@ pub async fn fetch_skin(client: Client, lang_group: i32) -> Result<Skin, String>
     let skin: Skin =
         serde_json::from_str(&body_text).map_err(|e| format!("Failed to parse JSON: {e}"))?;
 
-    let _ = dbg!("Skin: {:?}", &skin);
+    tracing::debug!("Skin: {:?}", &skin);
 
     Ok(skin)
 }

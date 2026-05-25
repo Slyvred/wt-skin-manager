@@ -1,5 +1,6 @@
 use crate::api::structures::Skin;
 use crate::backend::config::Config;
+use dioxus::logger::tracing;
 use dioxus::prelude::*;
 
 pub async fn uninstall_skin(
@@ -16,7 +17,7 @@ pub async fn uninstall_skin(
         .find(|(_, x)| x.lang_group == skin.lang_group)
         .unwrap();
 
-    dbg!("Index: {}\nSkin {}", idx, skin_to_remove);
+    tracing::debug!("Index: {}\nSkin {:?}", idx, skin_to_remove);
 
     let delete_res = std::fs::remove_dir_all(&skin_to_remove.path);
 

@@ -13,6 +13,7 @@ use crate::ui::uninstall_page::UninstallPage;
 use backend::config::Config;
 use dioxus::desktop::LogicalSize;
 use dioxus::desktop::WindowBuilder;
+use dioxus::logger::tracing;
 use dioxus::prelude::*;
 use reqwest::Client;
 
@@ -58,12 +59,12 @@ fn App() -> Element {
             user_config.set(config);
         }
         Err(e) => {
-            dbg!("{:?}", e);
+            tracing::debug!("{:?}", e);
             open.set(true);
         }
     }
 
-    let _ = dbg!("FONTS PATH: {:?}", CASKAYDIA_MONO_NERD_FONT);
+    tracing::debug!("FONTS PATH: {:?}", CASKAYDIA_MONO_NERD_FONT);
 
     provide_context(user_config);
     provide_context(client);

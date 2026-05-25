@@ -2,6 +2,7 @@ use crate::api::networking::fetch_skin;
 use crate::backend::config::Config;
 use crate::components::button::*;
 use crate::ui::camo_card_uninstall::CamoCardUninstall;
+use dioxus::logger::tracing;
 use dioxus::prelude::*;
 use reqwest::Client;
 
@@ -22,7 +23,7 @@ pub fn UninstallPage() -> Element {
                         fetched_skins.push(skin_data);
                     }
                     Err(e) => {
-                        dbg!("Error fetching installed skin: {}", e);
+                        tracing::debug!("Error fetching installed skin: {}", e);
                     }
                 }
             }

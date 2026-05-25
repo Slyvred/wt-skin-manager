@@ -3,6 +3,7 @@ use crate::components::alert_dialog::*;
 use crate::components::button::*;
 use crate::components::input::*;
 use crate::components::label::*;
+use dioxus::logger::tracing;
 use dioxus::prelude::*;
 use dioxus_primitives::toast::{use_toast, ToastOptions};
 use std::path::Path;
@@ -36,7 +37,7 @@ fn save_config(
             Ok(config)
         }
         Err(e) => {
-            let _ = dbg!("{:?}", &e);
+            tracing::debug!("{:?}", &e);
             Err(format!("Failed to save config: {}", e))
         }
     }

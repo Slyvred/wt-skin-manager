@@ -1,5 +1,6 @@
 use crate::api::structures::Skin;
 use crate::backend::config::{Config, InstalledSkin};
+use dioxus::logger::tracing;
 use dioxus::prelude::*;
 use std::fs::File;
 use std::io;
@@ -59,10 +60,10 @@ async fn extract_skin(
         let new_dir_path = format!("{}/{}", game_dir, folder_name);
 
         std::fs::create_dir_all(&new_dir_path).map_err(|e| e.to_string())?;
-        let _ = dbg!("No root folder in archive, creating one: {}", folder_name);
+        tracing::debug!("No root folder in archive, creating one: {}", folder_name);
         new_dir_path
     } else {
-        let _ = dbg!("Clean archive, proceeding to extraction");
+        tracing::debug!("Clean archive, proceeding to extraction");
         game_dir.to_string()
     };
 
