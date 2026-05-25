@@ -1,6 +1,6 @@
 [package]
 name = "wt-skin-manager"
-version = "0.8.2"
+version = "0.8.5"
 authors = ["Slyvred <slyvred.cc@pm.me>"]
 edition = "2021"
 

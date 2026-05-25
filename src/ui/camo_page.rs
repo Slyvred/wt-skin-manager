@@ -55,9 +55,20 @@ pub fn CamoPage() -> Element {
             class: "columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-6 p-6 w-full max-w-[98vw] my-12 -mx-6",
             id: "camo-page",
 
-            for index in 0..page_data.read().data.list.len() {
-                CamoCard {
-                    skin_signal: page_data.map(move |p| &p.data.list[index])
+            if page_data.read().data.list.is_empty() {
+                h1 {
+                    class: "text-3xl font-bold mb-4",
+                    "No results returned "
+                }
+                p {
+                    class: "text-lg",
+                    "Try adjusting the filters to find better results"
+                }
+            } else {
+                for index in 0..page_data.read().data.list.len() {
+                    CamoCard {
+                        skin_signal: page_data.map(move |p| &p.data.list[index])
+                    }
                 }
             }
 
