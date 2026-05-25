@@ -1,4 +1,4 @@
-use crate::api::structures::*;
+use crate::{api::structures::*, FILTERS};
 use dioxus::logger::tracing;
 use regex::Regex;
 use reqwest::Client;
@@ -22,23 +22,38 @@ pub async fn fetch_filters(client: Client) -> Result<Filters, String> {
             "Mozilla/5.0 (X11; Linux x86_64; rv:150.0) Gecko/20100101 Firefox/150.0",
         )
         .header("Origin", "https://live.warthunder.com")
+        .header("Referer", "https://live.warthunder.com/feed/all/")
         .form(&params)
         .send()
         .await
         .map_err(|e| format!("Network error : {e}"))?;
 
-    let body_text = res.text().await.map_err(|e| e.to_string())?;
-    let re = Regex::new(r"(?s)const filters = (\{.*?\});").unwrap();
+    let status_code = res.status();
+    tracing::debug!("Filters status: {:?}", status_code);
 
-    let mut results = String::new();
-    for (_, [json]) in re.captures_iter(&body_text).map(|c| c.extract()) {
-        results = json.to_string();
+    let json_filters: Filters;
+
+    if status_code != reqwest::StatusCode::OK {
+        tracing::debug!("Failed to fetch filters, reverting to local backup");
+        let bytes = dioxus::asset_resolver::read_asset_bytes(&FILTERS)
+            .await
+            .unwrap();
+
+        json_filters = serde_json::from_slice(&bytes).map_err(|e| e.to_string())?;
+    } else {
+        let body_text = res.text().await.map_err(|e| e.to_string())?;
+        let re = Regex::new(r"(?s)const filters = (\{.*?\});").unwrap();
+
+        let mut results = String::new();
+        for (_, [json]) in re.captures_iter(&body_text).map(|c| c.extract()) {
+            results = json.to_string();
+        }
+
+        json_filters = tokio::task::spawn_blocking(move || serde_json::from_str(&results))
+            .await
+            .map_err(|_| "Thread pool error".to_string())?
+            .map_err(|e| format!("Failed to parse JSON: {e}"))?;
     }
-
-    let json_filters: Filters = tokio::task::spawn_blocking(move || serde_json::from_str(&results))
-        .await
-        .map_err(|_| "Thread pool error".to_string())?
-        .map_err(|e| format!("Failed to parse JSON: {e}"))?;
 
     Ok(json_filters)
 }
