@@ -6,7 +6,40 @@ use crate::backend::uninstaller::*;
 use crate::components::button::*;
 use crate::components::card::*;
 use dioxus::prelude::*;
-use dioxus_primitives::toast::{use_toast, ToastOptions};
+use dioxus_primitives::toast::{use_toast, ToastOptions, Toasts};
+
+fn uninstall(toast: Toasts, user_config: Signal<Config>, skin_signal: ReadSignal<Skin>) {
+    toast.info(
+        "Information".to_string(),
+        ToastOptions::new()
+            .description(format!("Downloading skin..."))
+            .duration(Duration::from_secs(5))
+            .permanent(false),
+    );
+
+    spawn(async move {
+        match uninstall_skin(skin_signal, user_config).await {
+            Ok(msg) => {
+                toast.success(
+                    "Success".to_string(),
+                    ToastOptions::new()
+                        .description(msg)
+                        .duration(Duration::from_secs(5))
+                        .permanent(false),
+                );
+            }
+            Err(err) => {
+                toast.error(
+                    "Error".to_string(),
+                    ToastOptions::new()
+                        .description(err)
+                        .duration(Duration::from_secs(5))
+                        .permanent(false),
+                );
+            }
+        }
+    });
+}
 
 #[component]
 pub fn CamoCardUninstall(skin_signal: ReadSignal<Skin>) -> Element {
@@ -50,30 +83,7 @@ pub fn CamoCardUninstall(skin_signal: ReadSignal<Skin>) -> Element {
                     Button {
                         variant: ButtonVariant::Destructive,
                         class: "w-full mx-auto",
-                        onclick: move |_| {
-                            spawn(async move {
-                                match uninstall_skin(skin_signal, user_config).await {
-                                    Ok(msg) => {
-                                        toast.success(
-                                            "Success".to_string(),
-                                            ToastOptions::new()
-                                                .description(msg)
-                                                .duration(Duration::from_secs(5))
-                                                .permanent(false)
-                                        );
-                                    }
-                                    Err(err) => {
-                                        toast.error(
-                                            "Error".to_string(),
-                                            ToastOptions::new()
-                                                .description(err)
-                                                .duration(Duration::from_secs(5))
-                                                .permanent(false)
-                                        );
-                                    }
-                                }
-                            });
-                        },
+                        onclick: move |_| { uninstall(toast, user_config, skin_signal); },
                         "Uninstall Skin"
                     }
                 }

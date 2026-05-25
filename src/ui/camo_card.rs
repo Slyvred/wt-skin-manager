@@ -6,7 +6,42 @@ use crate::backend::installer::*;
 use crate::components::button::*;
 use crate::components::card::*;
 use dioxus::prelude::*;
-use dioxus_primitives::toast::{use_toast, ToastOptions};
+use dioxus_primitives::toast::{use_toast, ToastOptions, Toasts};
+
+fn install(toast: Toasts, user_config: Signal<Config>, skin_signal: ReadSignal<Skin>) {
+    toast.info(
+        "Information".to_string(),
+        ToastOptions::new()
+            .description(format!("Downloading skin..."))
+            .duration(Duration::from_secs(5))
+            .permanent(false),
+    );
+
+    let skin_copy = skin_signal.read().clone();
+
+    spawn(async move {
+        match install_skin(skin_copy, user_config).await {
+            Ok(msg) => {
+                toast.success(
+                    "Success".to_string(),
+                    ToastOptions::new()
+                        .description(msg)
+                        .duration(Duration::from_secs(5))
+                        .permanent(false),
+                );
+            }
+            Err(err) => {
+                toast.error(
+                    "Error".to_string(),
+                    ToastOptions::new()
+                        .description(err)
+                        .duration(Duration::from_secs(5))
+                        .permanent(false),
+                );
+            }
+        }
+    });
+}
 
 #[component]
 pub fn CamoCard(skin_signal: ReadSignal<Skin>) -> Element {
@@ -50,40 +85,7 @@ pub fn CamoCard(skin_signal: ReadSignal<Skin>) -> Element {
                     Button {
                         variant: ButtonVariant::Secondary,
                         class: "w-full mx-auto",
-                        onclick: move |_| {
-                            toast.info(
-                                "Information".to_string(),
-                                ToastOptions::new()
-                                    .description(format!("Downloading skin..."))
-                                    .duration(Duration::from_secs(5))
-                                    .permanent(false)
-                            );
-
-                            let skin_copy = skin_signal.read().clone();
-
-                            spawn(async move {
-                                match install_skin(skin_copy, user_config).await {
-                                    Ok(msg) => {
-                                        toast.success(
-                                            "Success".to_string(),
-                                            ToastOptions::new()
-                                                .description(msg)
-                                                .duration(Duration::from_secs(5))
-                                                .permanent(false)
-                                        );
-                                    }
-                                    Err(err) => {
-                                        toast.error(
-                                            "Error".to_string(),
-                                            ToastOptions::new()
-                                                .description(err)
-                                                .duration(Duration::from_secs(5))
-                                                .permanent(false)
-                                        );
-                                    }
-                                }
-                            });
-                        },
+                        onclick: move |_| { install(toast, user_config, skin_signal); },
                         "Install Skin ({(skin.file.size as f32 / 1_000_000.0).round()} MB)"
                     }
                 }
