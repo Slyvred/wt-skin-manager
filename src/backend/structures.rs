@@ -1,3 +1,4 @@
+// Contains the values of the filters
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct SearchParams {
     pub country: Option<String>,

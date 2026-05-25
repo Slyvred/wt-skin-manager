@@ -42,7 +42,7 @@ fn uninstall(toast: Toasts, user_config: Signal<Config>, skin_signal: ReadSignal
 }
 
 #[component]
-pub fn CamoCardUninstall(skin_signal: ReadSignal<Skin>) -> Element {
+pub fn UninstallCard(skin_signal: ReadSignal<Skin>) -> Element {
     let skin = skin_signal.read();
 
     let user_config = use_context::<Signal<Config>>();

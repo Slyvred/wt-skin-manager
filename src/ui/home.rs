@@ -4,7 +4,7 @@ use crate::components::toast::*;
 use dioxus::logger::tracing;
 use dioxus::prelude::*;
 
-use crate::ui::camo_feed::CamoFeed;
+use crate::ui::camo_page::CamoPage;
 use crate::ui::config_modal::ConfigModal;
 use crate::ui::uninstall_page::UninstallPage;
 
@@ -90,7 +90,7 @@ pub fn Home() -> Element {
                     id: "inset",
                     {
                         if *show_feed.read() {
-                            rsx! { CamoFeed {} }
+                            rsx! { CamoPage {} }
                         } else if *show_uninstall.read() {
                             rsx! { UninstallPage {} }
                         }
