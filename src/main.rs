@@ -25,6 +25,13 @@ static CASKAYDIA_MONO_NERD_FONT: Asset = asset!(
     manganis::AssetOptions::builder().with_hash_suffix(false)
 );
 
+// Contains our backup json filters
+#[used]
+static FILTERS: Asset = asset!(
+    "/assets/filters.json",
+    manganis::AssetOptions::builder().with_hash_suffix(false)
+);
+
 fn main() {
     let window = WindowBuilder::new()
         .with_inner_size(LogicalSize::new(1024.0, 768.0))

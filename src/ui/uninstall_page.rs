@@ -1,7 +1,7 @@
 use crate::api::networking::fetch_skin;
 use crate::backend::config::Config;
 use crate::components::button::*;
-use crate::ui::camo_card_uninstall::CamoCardUninstall;
+use crate::ui::uninstall_card::UninstallCard;
 use dioxus::logger::tracing;
 use dioxus::prelude::*;
 use reqwest::Client;
@@ -40,7 +40,7 @@ pub fn UninstallPage() -> Element {
 
             if let Some(installed_skins) = skins {
                 for index in 0..installed_skins.len() {
-                    CamoCardUninstall {
+                    UninstallCard {
                         skin_signal: installed_skins_resource.map(move |v| {
                             v.as_ref()
                              .and_then(|list| list.get(index))
