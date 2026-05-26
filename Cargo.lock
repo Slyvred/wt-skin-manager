@@ -6876,12 +6876,13 @@ dependencies = [
 
 [[package]]
 name = "wt-skin-manager"
-version = "0.8.6"
+version = "0.9.0"
 dependencies = [
  "dioxus",
  "dioxus-icons",
  "dioxus-primitives",
  "directories",
+ "futures",
  "regex",
  "reqwest 0.13.3",
  "serde",

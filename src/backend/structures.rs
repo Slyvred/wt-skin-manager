@@ -5,4 +5,5 @@ pub struct SearchParams {
     pub v_type: Option<String>,
     pub class: Option<String>,
     pub vehicle: Option<String>,
+    pub search: Option<String>,
 }
