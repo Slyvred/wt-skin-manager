@@ -82,11 +82,11 @@ This software is provided **"as is"**, without warranty of any kind. While it ha
 
 ## Todo
 
-- [ ] Refactor and clean up the codebase !!!!
-- [ ] Separate "backend" logic from the UI components.
 - [ ] Implement a dedicated Settings page.
 - [ ] Support uninstallation of skins not installed through the manager
-- [ ] Add a search bar like on the website
+- [x] Refactor and clean up the codebase !!!!
+- [x] Separate "backend" logic from the UI components.
+- [x] Add a search bar like on the website
 
 ---
 
