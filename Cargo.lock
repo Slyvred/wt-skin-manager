@@ -6876,7 +6876,7 @@ dependencies = [
 
 [[package]]
 name = "wt-skin-manager"
-version = "0.8.5"
+version = "0.8.6"
 dependencies = [
  "dioxus",
  "dioxus-icons",
