@@ -3,6 +3,7 @@ use crate::api::structures::Filters;
 use crate::backend::structures::SearchParams;
 use crate::components::button::*;
 use crate::components::combobox::*;
+use crate::components::input::Input;
 use dioxus::prelude::*;
 use reqwest::Client;
 
@@ -23,6 +24,8 @@ pub fn FiltersModal(on_search: EventHandler<SearchParams>) -> Element {
 
     let mut vehicle_query = use_signal(String::new);
     let mut vehicle_value = use_signal(|| None::<String>);
+
+    let mut searchbar_value = use_signal(|| None::<String>);
 
     use_hook(move || {
         spawn(async move {
@@ -81,7 +84,7 @@ pub fn FiltersModal(on_search: EventHandler<SearchParams>) -> Element {
             }
 
             Combobox::<String> {
-                style: "margin-left: 0.5rem;",
+                style: "margin-left: 0.5rem; margin-bottom: 0.5rem;",
                 value: Some(type_value.into()),
                 on_value_change: move |next: Option<String>| type_value.set(next),
                 query: type_query(),
@@ -120,7 +123,7 @@ pub fn FiltersModal(on_search: EventHandler<SearchParams>) -> Element {
             }
 
             Combobox::<String> {
-                style: "margin-left: 0.5rem;",
+                style: "margin-left: 0.5rem; margin-bottom: 0.5rem;",
                 value: Some(class_value.into()),
                 on_value_change: move |next: Option<String>| class_value.set(next),
                 query: class_query(),
@@ -188,7 +191,7 @@ pub fn FiltersModal(on_search: EventHandler<SearchParams>) -> Element {
             }
 
             Combobox::<String> {
-                style: "margin-left: 0.5rem;",
+                style: "margin-left: 0.5rem; margin-bottom: 0.5rem;",
                 value: Some(vehicle_value.into()),
                 on_value_change: move |next: Option<String>| vehicle_value.set(next),
                 query: vehicle_query(),
@@ -258,8 +261,15 @@ pub fn FiltersModal(on_search: EventHandler<SearchParams>) -> Element {
                 }
             }
 
+            Input {
+                style: "display: inline; height: 2.25rem; margin-left: 0.5rem; margin-bottom: 0.5rem;",
+                oninput: move |e: FormEvent| searchbar_value.set(Some(e.value())),
+                placeholder: "Start typing #here",
+                value: searchbar_value,
+            }
+
             Button {
-                style: "margin-left: 0.5rem;",
+                style: "margin-left: 0.5rem; margin-bottom: 0.5rem;",
                 variant: ButtonVariant::Secondary,
                 onclick: move |_| {
                     on_search.call(SearchParams {
@@ -267,6 +277,7 @@ pub fn FiltersModal(on_search: EventHandler<SearchParams>) -> Element {
                         v_type: type_value.read().clone(),
                         class: class_value.read().clone(),
                         vehicle: vehicle_value.read().clone(),
+                        search: searchbar_value.read().clone(),
                     });
                 },
                 "Search",

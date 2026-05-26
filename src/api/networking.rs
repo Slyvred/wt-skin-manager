@@ -64,6 +64,7 @@ pub async fn fetch_page(
     vehicle_type: &str,
     vehicle_class: &str,
     vehicle: &str,
+    search_string: &str,
     page: i32,
 ) -> std::prelude::v1::Result<Page, String> {
     let params = [
@@ -71,7 +72,7 @@ pub async fn fetch_page(
         ("sort", "rating"),
         ("user", ""),
         ("period", ""),
-        ("searchString", ""),
+        ("searchString", &search_string),
         ("featured", "0"),
         ("subtype", "all"),
         ("page", &page.to_string()),
@@ -109,7 +110,7 @@ pub async fn fetch_skin(client: Client, lang_group: i32) -> Result<Skin, String>
     let lang_group_str = lang_group.to_string();
     let params = [("lang_group", lang_group_str.as_str()), ("language", "en")];
 
-    tracing::debug!("POST Params: {:?}", params);
+    // tracing::debug!("POST Params: {:?}", params);
 
     let res = client
         .post("https://live.warthunder.com/api/posts/get/")
@@ -128,7 +129,8 @@ pub async fn fetch_skin(client: Client, lang_group: i32) -> Result<Skin, String>
     let skin: Skin =
         serde_json::from_str(&body_text).map_err(|e| format!("Failed to parse JSON: {e}"))?;
 
-    tracing::debug!("Skin: {:?}", &skin);
+    // tracing::debug!("Skin: {:?}", &skin);
+    tracing::debug!("Fetched skin: {}", &skin.id);
 
     Ok(skin)
 }

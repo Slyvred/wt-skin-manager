@@ -46,6 +46,10 @@ jobs:
             curl -sSL https://dioxus.dev/install.sh | bash
           fi
 
+      - name: "Build CSS"
+        shell: bash
+        run: npx @tailwindcss/cli -i ./input.css -o ./assets/tailwind.css
+
       - name: Bundle for Linux
         shell: bash
         if: matrix.os == 'ubuntu-latest'

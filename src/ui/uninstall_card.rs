@@ -9,14 +9,6 @@ use dioxus::prelude::*;
 use dioxus_primitives::toast::{use_toast, ToastOptions, Toasts};
 
 fn uninstall(toast: Toasts, user_config: Signal<Config>, skin_signal: ReadSignal<Skin>) {
-    toast.info(
-        "Information".to_string(),
-        ToastOptions::new()
-            .description(format!("Downloading skin..."))
-            .duration(Duration::from_secs(5))
-            .permanent(false),
-    );
-
     spawn(async move {
         match uninstall_skin(skin_signal, user_config).await {
             Ok(msg) => {

@@ -58,6 +58,17 @@ Finally, clone the repository and create a bundle with the Dioxus CLI:
 dx bundle --windows --package-types msi --release
 ```
 
+### MacOS
+
+Upon launch, you may encounter an error saying that the application is "damaged" and that you should put it in the bin. 
+Well the application is perfectly fine, I just don't want to pay Apple to get developer certificates. To escape Apple's quarantine policy you'll need to use the following command:
+
+```bash
+xattr -cr /Applications/WtSkinManager.app
+```
+
+Then, try to run the application Again. It should now be working :)
+
 ### Arch-based distros 
 
 You'll see that the AppImage will crash on startup du to a `WebKitNetworkProcess` error. To fix the problem the simplest fix is to run the app with: 
@@ -82,11 +93,12 @@ This software is provided **"as is"**, without warranty of any kind. While it ha
 
 ## Todo
 
-- [ ] Refactor and clean up the codebase !!!!
-- [ ] Separate "backend" logic from the UI components.
 - [ ] Implement a dedicated Settings page.
 - [ ] Support uninstallation of skins not installed through the manager
-- [ ] Add a search bar like on the website
+- [ ] Get an actual logo
+- [x] Refactor and clean up the codebase !!!! (kinda done)
+- [x] Separate "backend" logic from the UI components. (kinda done also)
+- [x] Add a search bar like on the website
 
 ---
 

@@ -27,10 +27,21 @@ pub fn CamoPage() -> Element {
         let country = params.country.unwrap_or("".to_string());
         let class = params.class.unwrap_or("".to_string());
         let v_type = params.v_type.unwrap_or("".to_string());
+        let search_string = params.search.unwrap_or("".to_string());
         let vehicle = params.vehicle.unwrap_or("".to_string());
 
         async move {
-            match fetch_page(client_clone, &country, &v_type, &class, &vehicle, page_num).await {
+            match fetch_page(
+                client_clone,
+                &country,
+                &v_type,
+                &class,
+                &vehicle,
+                &search_string,
+                page_num,
+            )
+            .await
+            {
                 Ok(fetched_page) => {
                     page_data.set(fetched_page);
                 }
@@ -84,34 +95,36 @@ pub fn CamoPage() -> Element {
                 },
                 " Scroll to top",
             }
-        }
 
-        Pagination {
-            style: "position: fixed; bottom: 1.25rem; margin: 0 auto;",
-            PaginationContent {
-                style: "background-color: rgba(10, 10, 10, 0.2); border: 1px solid gray; border-radius: 10px; padding: 0.3rem;",
-                PaginationItem {
-                    PaginationPrevious {
-                        onclick: move |_| {
-                            let current = *active_page.read();
-                            if current > 0 {
-                                active_page.set(current - 1);
+            Pagination {
+                // style: "position: fixed; bottom: 1.25rem; margin: 0 auto;",
+                class: "fixed bottom-5 left-0 right-0 mx-auto w-fit z-10",
+                PaginationContent {
+                    style: "background-color: rgba(10, 10, 10, 0.2); border: 1px solid gray; border-radius: 10px; padding: 0.3rem;",
+                    PaginationItem {
+                        PaginationPrevious {
+                            onclick: move |_| {
+                                let current = *active_page.read();
+                                if current > 0 {
+                                    active_page.set(current - 1);
+                                }
                             }
                         }
                     }
-                }
-                PaginationItem {
-                    PaginationLink { is_active: true, "{active_page.read()}"}
-                }
-                PaginationItem {
-                    PaginationNext {
-                        onclick: move |_| {
-                            let current = *active_page.read();
-                            active_page.set(current + 1);
+                    PaginationItem {
+                        PaginationLink { is_active: true, "{active_page.read()}"}
+                    }
+                    PaginationItem {
+                        PaginationNext {
+                            onclick: move |_| {
+                                let current = *active_page.read();
+                                active_page.set(current + 1);
+                            }
                         }
                     }
                 }
             }
         }
+
     }
 }

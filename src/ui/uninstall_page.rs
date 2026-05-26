@@ -16,18 +16,21 @@ pub fn UninstallPage() -> Element {
         let client_raw = client.read().clone();
 
         async move {
-            let mut fetched_skins = Vec::new();
-            for skin in current_skins {
-                match fetch_skin(client_raw.clone(), skin.lang_group).await {
-                    Ok(skin_data) => {
-                        fetched_skins.push(skin_data);
-                    }
-                    Err(e) => {
-                        tracing::debug!("Error fetching installed skin: {}", e);
+            let tasks = current_skins.into_iter().map(|skin| {
+                let client = client_raw.clone();
+                async move {
+                    match fetch_skin(client, skin.lang_group).await {
+                        Ok(skin_data) => Some(skin_data),
+                        Err(e) => {
+                            tracing::debug!("Error fetching installed skin: {}", e);
+                            None
+                        }
                     }
                 }
-            }
-            fetched_skins
+            });
+
+            let results = futures::future::join_all(tasks).await;
+            results.into_iter().flatten().collect::<Vec<_>>()
         }
     });
 
