@@ -95,6 +95,7 @@ This software is provided **"as is"**, without warranty of any kind. While it ha
 
 - [ ] Implement a dedicated Settings page.
 - [ ] Support uninstallation of skins not installed through the manager
+- [ ] Get an actual logo
 - [x] Refactor and clean up the codebase !!!! (kinda done)
 - [x] Separate "backend" logic from the UI components. (kinda done also)
 - [x] Add a search bar like on the website
