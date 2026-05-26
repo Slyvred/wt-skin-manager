@@ -89,7 +89,7 @@ pub fn CamoPage() -> Element {
         Pagination {
             style: "position: fixed; bottom: 1.25rem; margin: 0 auto;",
             PaginationContent {
-                style: "background-color: #0a0a0a; border-radius: 10px; padding: 0.3rem;",
+                style: "background-color: rgba(10, 10, 10, 0.2); border: 1px solid gray; border-radius: 10px; padding: 0.3rem;",
                 PaginationItem {
                     PaginationPrevious {
                         onclick: move |_| {

@@ -102,8 +102,17 @@ pub async fn install_skin(skin: Skin, mut config_signal: Signal<Config>) -> Resu
 
     {
         let mut config = config_signal.write();
-        config.installed_skins.push(skin);
-        let _ = config.save();
+
+        // If the same skin gets re-downloaded we don't want to write it again in the config
+        if config
+            .installed_skins
+            .iter()
+            .find(|&s| s.lang_group == skin.lang_group)
+            .is_none()
+        {
+            config.installed_skins.push(skin);
+            let _ = config.save();
+        }
     }
 
     match std::fs::remove_file(&archive_path) {
