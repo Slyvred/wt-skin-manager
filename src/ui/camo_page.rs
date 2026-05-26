@@ -87,7 +87,8 @@ pub fn CamoPage() -> Element {
         }
 
         Pagination {
-            style: "position: fixed; bottom: 1.25rem; margin: 0 auto;",
+            // style: "position: fixed; bottom: 1.25rem; margin: 0 auto;",
+            class: "fixed bottom-5 left-0 right-0 mx-auto w-fit z-10",
             PaginationContent {
                 style: "background-color: rgba(10, 10, 10, 0.2); border: 1px solid gray; border-radius: 10px; padding: 0.3rem;",
                 PaginationItem {
