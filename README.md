@@ -99,6 +99,10 @@ This software is provided **"as is"**, without warranty of any kind. While it ha
 - [x] Refactor and clean up the codebase !!!! (kinda done)
 - [x] Separate "backend" logic from the UI components. (kinda done also)
 - [x] Add a search bar like on the website
+- [ ] Add local favorites
+- [ ] Link Warthunder account to actually like
+- [ ] Add support for user missions
+- [ ] Add update notification
 
 ---
 
